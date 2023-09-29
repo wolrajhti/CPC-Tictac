@@ -14,6 +14,8 @@ local w, h = background:getDimensions()
 local W, H = love.graphics.getDimensions()
 local OX, OY = W / 2, H / 2
 
+local cells = {}
+
 local function ternary(cond, T, F)
   if cond then return T else return F end
 end
@@ -21,11 +23,22 @@ end
 local ratio = ternary(W / H < w / h, W / w, H / h)
 
 local function cell_at(x, y)
-  return {
-    x = math.floor(x / (16 * ratio)) * (16 * ratio) + (-2 * ratio), -- le -2 final est l'offset de la grille
-    y = math.floor(y / (4 * ratio)) * (4 * ratio) + (-2 * ratio),
-    h = 0
-  }
+  x = math.floor(x / (16 * ratio)) * (16 * ratio) + (-2 * ratio) -- le -2 final est l'offset de la grille
+  y = math.floor(y / (4 * ratio)) * (4 * ratio) + (-2 * ratio) -- le -2 final est l'offset de la grille
+  if not cells[x] then
+    cells[x] = {[y] = {x = x, y = y, objs = {}}}
+  elseif not cells[x][y] then
+    cells[x][y] = {x = x, y = y, objs = {}}
+  end
+  return cells[x][y]
+end
+
+local function cell_h(obj)
+  local h = 0
+  for i, v in ipairs(obj) do
+    h = h + v.h
+  end
+  return h
 end
 
 local current_cell
@@ -90,7 +103,7 @@ function love.draw()
       love.graphics.draw(aim_system, tick, current_cell.x, current_cell.y + (i - 1) * ratio * 4, 0, ratio, ratio, -10, 36)
     end
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(aim_system, goal, current_cell.x, current_cell.y + (10 - current_cell.h) * ratio * 4, 0, ratio, ratio, -8, 38)
+    love.graphics.draw(aim_system, goal, current_cell.x, current_cell.y + (10 - cell_h(current_cell.objs)) * ratio * 4, 0, ratio, ratio, -8, 38)
     if aiming then
       love.graphics.draw(aim_system, target, current_cell.x, py1, 0, ratio, ratio, -5, 41)
     end
