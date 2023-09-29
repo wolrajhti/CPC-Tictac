@@ -11,6 +11,12 @@ local tick = utils.initQuad(texture, 10, 2, 4, 8, nil, 6)
 local goal = utils.initQuad(texture, 8, 12, 8, 8)
 local target = utils.initQuad(texture, 17, 17, 14, 14)
 local plane = utils.initQuad(texture, 20, 39, 9, 5)
+local redac = {
+  love.graphics.newImage('assets/sprites/cpc_assets9.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets10.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets11.png')
+}
+local ackboo = utils.initAnimation(redac, 20, 2, 17, 29)
 
 local W, H = love.graphics.getDimensions()
 local OX, OY = W / 2, H / 2
@@ -68,6 +74,7 @@ function love.update(dt)
       table.insert(cell.objs, {quad = plane, h = 1})
     end
   end
+  ackboo:update(dt)
 end
 
 love.graphics.setLineStyle('rough')
@@ -109,6 +116,7 @@ function love.draw()
       end
     end
   end
+  utils.drawQuad(ackboo, utils.worldCoordinates(5, 10))
 end
 
 function love.mousemoved(x, y)

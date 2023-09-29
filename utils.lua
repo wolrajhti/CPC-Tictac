@@ -52,6 +52,20 @@ function utils.initQuad(texture, x, y, width, height, ox, oy)
   }
 end
 
+function utils.initAnimation(frames, x, y, width, height, ox, oy)
+  local t = 0
+  return {
+    update = function (self, dt)
+      t = (t + 1 * dt) % 1
+      self.texture = frames[math.floor(#frames * t) + 1]
+    end,
+    texture = frames[1],
+    quad = love.graphics.newQuad(x, y, width, height, frames[1]:getDimensions()),
+    ox = ox or width / 2,
+    oy = oy or height / 2
+  }
+end
+
 function utils.drawImage(data, x, y)
   love.graphics.draw(data.image, x, y, 0, utils.ratio, utils.ratio, data.ox, data.oy)
 end
