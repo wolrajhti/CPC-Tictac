@@ -8,9 +8,9 @@ local utils = {
 function utils.cellAt(x, y)
   x, y = utils.cellCoordinates(x, y)
   if not utils.cells[x] then
-    utils.cells[x] = {[y] = {x = x, y = y, objs = {{h = math.random(5, 5)}}}} -- h pour tester
+    utils.cells[x] = {[y] = {x = x, y = y, objs = {}}} -- h pour tester
   elseif not utils.cells[x][y] then
-    utils.cells[x][y] = {x = x, y = y, objs = {{h = math.random(5, 5)}}} -- h pour tester
+    utils.cells[x][y] = {x = x, y = y, objs = {}} -- h pour tester
   end
   return utils.cells[x][y]
 end

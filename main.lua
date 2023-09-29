@@ -24,7 +24,7 @@ local aiming = false
 local t0
 
 local flying = false
-local PSPEED = 10
+local PSPEED = 50
 local px0, py0 = 0, 24
 local px1, py1
 local px, py
@@ -62,6 +62,11 @@ function love.update(dt)
     pt = math.min(pt + PSPEED * dt / plen, 1)
     px = px0 + pt * (px1 - px0)
     py = py0 + pt * (py1 - py0)
+    if pt == 1 then
+      flying = false
+      local cell = utils.cellAt(utils.worldCoordinates(px, py))
+      table.insert(cell.objs, {quad = plane, h = 1})
+    end
   end
 end
 
@@ -75,10 +80,10 @@ function love.draw()
     utils.drawImage(cursor, utils.worldCoordinates(cell.x, cell.y))
     utils.drawQuad(ruler, utils.worldCoordinates(cell.x, cell.y))
     for i = -9, 0 do
-      if i < 3 - cell.x then
-        love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
-      else
+      if i <= cell.x - 17 then -- à ajuster
         love.graphics.setColor(233 / 255, 54 / 255, 54 / 255)
+      else
+        love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
       end
       utils.drawQuad(tick, utils.worldCoordinates(cell.x, cell.y + i))
     end
@@ -89,11 +94,20 @@ function love.draw()
     end
   end
   if flying then
-    love.graphics.setColor(0, 0, 0)
-    local a, b = utils.worldCoordinates(px0, py0)
-    love.graphics.line(a, b, utils.worldCoordinates(px1, py1))
-    love.graphics.setColor(1, 1, 1)
+    -- love.graphics.setColor(0, 0, 0)
+    -- local a, b = utils.worldCoordinates(px0, py0)
+    -- love.graphics.line(a, b, utils.worldCoordinates(px1, py1))
+    -- love.graphics.setColor(1, 1, 1)
     utils.drawQuad(plane, utils.worldCoordinates(px, py))
+  end
+  for x, row in pairs(utils.cells) do
+    for y, cell in pairs(row) do
+      local h = 0
+      for k, obj in ipairs(cell.objs) do
+        utils.drawQuad(obj.quad, utils.worldCoordinates(x, y - h))
+        h = h + obj.h
+      end
+    end
   end
 end
 
