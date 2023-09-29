@@ -66,6 +66,29 @@ function utils.initAnimation(frames, speed, x, y, width, height, ox, oy)
   }
 end
 
+function utils.initPath(vertices)
+  local lens = {}
+  local len = 0
+  for i = 1, #vertices - 1 do
+    len = len + math.sqrt((vertices[i + 1][1] - vertices[i][1])^2 + (vertices[i + 1][2] - vertices[i][2])^2)
+    table.insert(lens, len)
+  end
+  return {
+    at = function(l)
+      local prev = 0
+      for i, len in ipairs(lens) do
+        if l <= len then
+          local coef = (l - prev) / (len - prev)
+          return vertices[i][1] + coef * (vertices[i + 1][1] - vertices[i][1]),
+            vertices[i][2] + coef * (vertices[i + 1][2] - vertices[i][2])
+        end
+        prev = len
+      end
+      return vertices[#vertices][1], vertices[#vertices][2]
+    end
+  }
+end
+
 function utils.drawImage(data, x, y)
   love.graphics.draw(data.image, x, y, 0, utils.ratio, utils.ratio, data.ox, data.oy)
 end

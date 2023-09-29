@@ -35,6 +35,9 @@ local px1, py1
 local px, py
 local plen, pt
 
+local P = 0
+local PATH = utils.initPath({{0, 0}, {0, 5}, {5, 5}})
+
 local function throw()
   py1 = utils.round(py1)
   px1 = px1 + cell.y - utils.targetHeight(cell) - utils.round(py1)
@@ -73,6 +76,7 @@ function love.update(dt)
       table.insert(cell.objs, {quad = plane, h = 1})
     end
   end
+  P = P + 6 * dt
   ackboo:update(dt)
 end
 
@@ -115,7 +119,7 @@ function love.draw()
       end
     end
   end
-  utils.drawQuad(ackboo, utils.worldCoordinates(5, 10))
+  utils.drawQuad(ackboo, utils.worldCoordinates(PATH.at(P)))
 end
 
 function love.mousemoved(x, y)
