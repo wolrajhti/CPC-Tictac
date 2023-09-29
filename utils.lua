@@ -8,11 +8,19 @@ local utils = {
 function utils.cellAt(x, y)
   x, y = utils.cellCoordinates(x, y)
   if not utils.cells[x] then
-    utils.cells[x] = {[y] = {x = x, y = y, objs = {{h = 2}}}} -- h pour tester
+    utils.cells[x] = {[y] = {x = x, y = y, objs = {{h = math.random(5, 5)}}}} -- h pour tester
   elseif not utils.cells[x][y] then
-    utils.cells[x][y] = {x = x, y = y, objs = {{h = 2}}} -- h pour tester
+    utils.cells[x][y] = {x = x, y = y, objs = {{h = math.random(5, 5)}}} -- h pour tester
   end
   return utils.cells[x][y]
+end
+
+function utils.targetHeight(cell)
+  local h = 0
+  for i, v in ipairs(cell.objs) do
+    h = h + v.h
+  end
+  return h
 end
 
 function utils.worldCoordinates(x, y)
@@ -54,6 +62,10 @@ end
 
 function utils.ternary(cond, T, F)
   if cond then return T else return F end
+end
+
+function utils.round(x)
+  return math.floor(x + .5)
 end
 
 return utils
