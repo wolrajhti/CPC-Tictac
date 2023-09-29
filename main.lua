@@ -12,11 +12,10 @@ local goal = utils.initQuad(texture, 8, 12, 8, 8)
 local target = utils.initQuad(texture, 17, 17, 14, 14)
 local plane = utils.initQuad(texture, 20, 39, 9, 5)
 local redac = {
-  love.graphics.newImage('assets/sprites/cpc_assets9.png'),
   love.graphics.newImage('assets/sprites/cpc_assets10.png'),
   love.graphics.newImage('assets/sprites/cpc_assets11.png')
 }
-local ackboo = utils.initAnimation(redac, 20, 2, 17, 29)
+local ackboo = utils.initAnimation(redac, 2, 20, 2, 17, 29)
 
 local W, H = love.graphics.getDimensions()
 local OX, OY = W / 2, H / 2

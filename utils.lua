@@ -52,11 +52,11 @@ function utils.initQuad(texture, x, y, width, height, ox, oy)
   }
 end
 
-function utils.initAnimation(frames, x, y, width, height, ox, oy)
+function utils.initAnimation(frames, speed, x, y, width, height, ox, oy)
   local t = 0
   return {
     update = function (self, dt)
-      t = (t + 1 * dt) % 1
+      t = (t + speed * dt) % 1
       self.texture = frames[math.floor(#frames * t) + 1]
     end,
     texture = frames[1],
