@@ -66,6 +66,16 @@ function utils.initAnimation(frames, speed, x, y, width, height, ox, oy)
   }
 end
 
+function utils.initText(font, str)
+  text = love.graphics.newText(font, str)
+  local w, h = text:getDimensions()
+  return {
+    text = text,
+    w = w,
+    h = h
+  }
+end
+
 function utils.initPath(vertices)
   local lens = {}
   local len = 0
@@ -95,6 +105,25 @@ end
 
 function utils.drawQuad(data, x, y)
   love.graphics.draw(data.texture, data.quad, x, y, 0, utils.ratio, utils.ratio, data.ox, data.oy)
+end
+
+local r, g, b, a
+function utils.drawText(data, x, y)
+  r, g, b, a = love.graphics.getColor()
+  love.graphics.setColor(0, 0, 0, 0.3)
+  love.graphics.rectangle('fill',
+    x - (data.w / 2 + utils.ratio),
+    y - (data.h + 3 * utils.ratio) - 29 * utils.ratio,
+    data.w + 2 * utils.ratio,
+    data.h + 2 * utils.ratio
+  )
+  -- love.graphics.setColor(0, 0, 0)
+  -- love.graphics.rectangle('line', x - (tw / 2 + utils.ratio), y - (th + 3 * utils.ratio) - 29 * utils.ratio, tw + 2 * utils.ratio, th + 2 * utils.ratio)
+  love.graphics.setColor(1, 1, 1)
+  -- voir si plus performant si on utilise utils.ratio, utils.ratio à la place de 1, 1
+  love.graphics.draw(text, x, y - 29 * utils.ratio, 0, 1, 1, data.w / 2, data.h + 3 * utils.ratio)
+  love.graphics.circle('fill', x, y, 4)
+  love.graphics.setColor(r, g, b, a)
 end
 
 function utils.ternary(cond, T, F)

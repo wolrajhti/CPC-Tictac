@@ -11,11 +11,18 @@ local tick = utils.initQuad(texture, 10, 2, 4, 8, nil, 6)
 local goal = utils.initQuad(texture, 8, 12, 8, 8)
 local target = utils.initQuad(texture, 17, 17, 14, 14)
 local plane = utils.initQuad(texture, 20, 39, 9, 5)
+local bookTexture = love.graphics.newImage('assets/sprites/books_2.png')
+local test = utils.initQuad(bookTexture, 0, 7, 11, 6)
+local mag = utils.initQuad(bookTexture, 10, 4, 11, 9)
+local pile = utils.initQuad(bookTexture, 20, 0, 11, 13)
 local redac = {
   love.graphics.newImage('assets/sprites/cpc_assets10.png'),
   love.graphics.newImage('assets/sprites/cpc_assets11.png')
 }
-local ackboo = utils.initAnimation(redac, 2, 20, 2, 17, 29)
+local ackboo = utils.initAnimation(redac, 2, 20, 2, 17, 29, nil, 28)
+local izual = utils.initAnimation(redac, 2, 37, 2, 17, 29, nil, 28)
+local sebum = utils.initAnimation(redac, 2, 53, 2, 18, 29, nil, 28)
+local ellen = utils.initAnimation(redac, 2, 72, 2, 15, 29, nil, 28)
 
 local W, H = love.graphics.getDimensions()
 local OX, OY = W / 2, H / 2
@@ -23,6 +30,46 @@ local OX, OY = W / 2, H / 2
 utils.ratio = 4 -- ternary(W / H < w / h, W / w, H / h)
 utils.cw = 16
 utils.ch = 4
+
+-- fonts
+local fonts = {
+  default = love.graphics.newImageFont('assets/fonts/Resource-Imagefont.png',
+    " abcdefghijklmnopqrstuvwxyz" ..
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0" ..
+    "123456789.,!?-+/():;%&`'*#=[]\""
+  ),
+  ackboo = love.graphics.newFont('assets/fonts/comic-sans-ms/ComicSansMS3.ttf', 6 * utils.ratio),
+  izual = love.graphics.newFont('assets/fonts/CT ProLamina.ttf', 9 * utils.ratio),
+  sebum = love.graphics.newFont('assets/fonts/exmouth/exmouth_.ttf', 8 * utils.ratio),
+  ellen = love.graphics.newFont('assets/fonts/mortified_drip/MortifiedDrip.ttf', 7 * utils.ratio)
+}
+
+local texts = {
+  ackboo = {
+    test = {
+      utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
+    },
+    pense = {}
+  },
+  izual = {
+    test = {
+      utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
+    },
+    pense = {}
+  },
+  sebum = {
+    test = {
+      utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
+    },
+    pense = {}
+  },
+  ellen = {
+    test = {
+      utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
+    },
+    pense = {}
+  }
+}
 
 local cell
 local aiming = false
@@ -36,7 +83,7 @@ local px, py
 local plen, pt
 
 local P = 0
-local PATH = utils.initPath({{0, 0}, {0, 5}, {5, 5}})
+local PATH = utils.initPath({{0, 0}, {0, 10}, {5, 15}})
 
 local function throw()
   py1 = utils.round(py1)
@@ -73,11 +120,14 @@ function love.update(dt)
     if pt == 1 then
       flying = false
       local cell = utils.cellAt(utils.worldCoordinates(px, py))
-      table.insert(cell.objs, {quad = plane, h = 1})
+      table.insert(cell.objs, {quad = ({plane, test, mag, pile})[math.random(1, 4)], h = 1})
     end
   end
   P = P + 6 * dt
   ackboo:update(dt)
+  izual:update(dt)
+  sebum:update(dt)
+  ellen:update(dt)
 end
 
 love.graphics.setLineStyle('rough')
@@ -120,6 +170,13 @@ function love.draw()
     end
   end
   utils.drawQuad(ackboo, utils.worldCoordinates(PATH.at(P)))
+  utils.drawQuad(izual, utils.worldCoordinates(5, 40))
+  utils.drawQuad(sebum, utils.worldCoordinates(10, 40))
+  utils.drawQuad(ellen, utils.worldCoordinates(15, 40))
+  utils.drawText(texts.ackboo.test[1], utils.worldCoordinates(PATH.at(P)))
+  utils.drawText(texts.izual.test[1], utils.worldCoordinates(5, 40))
+  utils.drawText(texts.sebum.test[1], utils.worldCoordinates(10, 40))
+  utils.drawText(texts.ellen.test[1], utils.worldCoordinates(15, 40))
 end
 
 function love.mousemoved(x, y)
