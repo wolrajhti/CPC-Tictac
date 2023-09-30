@@ -76,25 +76,15 @@ function utils.initText(font, str)
   }
 end
 
-function utils.initPath(vertices)
-  local lens = {}
-  local len = 0
-  for i = 1, #vertices - 1 do
-    len = len + math.sqrt((vertices[i + 1][1] - vertices[i][1])^2 + (vertices[i + 1][2] - vertices[i][2])^2)
-    table.insert(lens, len)
-  end
+function utils.initPath(x1, y1, x2, y2)
+  local len = math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
+  local t = 0
   return {
-    at = function(l)
-      local prev = 0
-      for i, len in ipairs(lens) do
-        if l <= len then
-          local coef = (l - prev) / (len - prev)
-          return vertices[i][1] + coef * (vertices[i + 1][1] - vertices[i][1]),
-            vertices[i][2] + coef * (vertices[i + 1][2] - vertices[i][2])
-        end
-        prev = len
-      end
-      return vertices[#vertices][1], vertices[#vertices][2]
+    update = function(t, dt)
+      return math.min(t + (.001 / len) * dt, 1)
+    end,
+    at = function(t)
+      return x1 + t * (x2 - x1), y1 + t * (y2 - y1)
     end
   }
 end

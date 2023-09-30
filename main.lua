@@ -24,6 +24,32 @@ local izual = utils.initAnimation(redac, 2, 37, 2, 17, 29, nil, 28)
 local sebum = utils.initAnimation(redac, 2, 53, 2, 18, 29, nil, 28)
 local ellen = utils.initAnimation(redac, 2, 72, 2, 15, 29, nil, 28)
 
+
+agent = {
+  x = 10,
+  y = 40,
+  state = 'waiting',
+  t = 0,
+  path = nil
+}
+
+WAITING_MAX = 300
+
+function agent.update(self, dt)
+  if self.state == 'waiting' then
+    if math.random() < .1 * dt then -- + .5 * math.min(self.since / WAITING_MAX, 1) then
+      self.state = 'walking'
+      local next = utils.cellAt(utils.worldCoordinates(math.random(-1, 1), math.random(-1, 1))) --  débile ce utils.cellAt(utils.worldCoordinates(...))
+      self.t = 0
+      print('youhou', next.x, next.y)
+      self.path = utils.initPath(self.x, self.y, next.x, next.y)
+    end
+  elseif self.state == 'walking' then
+    self.t = self.path.update(self.t, dt)
+    self.x, self.y = self.path.at(self.t)
+  end
+end
+
 local W, H = love.graphics.getDimensions()
 local OX, OY = W / 2, H / 2
 
@@ -83,7 +109,7 @@ local px, py
 local plen, pt
 
 local P = 0
-local PATH = utils.initPath({{0, 0}, {0, 10}, {5, 15}})
+local PATH = utils.initPath(0, 0, 5, 15)
 
 local function throw()
   py1 = utils.round(py1)
@@ -123,11 +149,12 @@ function love.update(dt)
       table.insert(cell.objs, {quad = ({plane, test, mag, pile})[math.random(1, 4)], h = 1})
     end
   end
-  P = P + 6 * dt
+  P = math.min(P + 6 * dt, 1)
   ackboo:update(dt)
   izual:update(dt)
   sebum:update(dt)
   ellen:update(dt)
+  agent:update(dt)
 end
 
 love.graphics.setLineStyle('rough')
@@ -175,7 +202,7 @@ function love.draw()
   utils.drawQuad(ellen, utils.worldCoordinates(15, 40))
   utils.drawText(texts.ackboo.test[1], utils.worldCoordinates(PATH.at(P)))
   utils.drawText(texts.izual.test[1], utils.worldCoordinates(5, 40))
-  utils.drawText(texts.sebum.test[1], utils.worldCoordinates(10, 40))
+  utils.drawText(texts.sebum.test[1], utils.worldCoordinates(agent.x, agent.y))
   utils.drawText(texts.ellen.test[1], utils.worldCoordinates(15, 40))
 end
 
