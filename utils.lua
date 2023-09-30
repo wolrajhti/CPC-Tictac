@@ -53,7 +53,7 @@ function utils.initQuad(texture, x, y, width, height, ox, oy)
 end
 
 function utils.initAnimation(frames, speed, x, y, width, height, ox, oy)
-  local t = 0
+  local t = math.random()
   return {
     update = function (self, dt)
       t = (t + speed * dt) % 1
@@ -78,10 +78,9 @@ end
 
 function utils.initPath(x1, y1, x2, y2)
   local len = math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
-  local t = 0
   return {
     update = function(t, dt)
-      return math.min(t + (.001 / len) * dt, 1)
+      return math.min(t + (3 / len) * dt, 1)
     end,
     at = function(t)
       return x1 + t * (x2 - x1), y1 + t * (y2 - y1)
@@ -93,8 +92,8 @@ function utils.drawImage(data, x, y)
   love.graphics.draw(data.image, x, y, 0, utils.ratio, utils.ratio, data.ox, data.oy)
 end
 
-function utils.drawQuad(data, x, y)
-  love.graphics.draw(data.texture, data.quad, x, y, 0, utils.ratio, utils.ratio, data.ox, data.oy)
+function utils.drawQuad(data, x, y, reverse) -- reverse pas terrible
+  love.graphics.draw(data.texture, data.quad, x, y, 0, utils.ternary(reverse, -1, 1) * utils.ratio, utils.ratio, data.ox, data.oy)
 end
 
 local r, g, b, a
@@ -122,6 +121,62 @@ end
 
 function utils.round(x)
   return math.floor(x + .5)
+end
+
+function utils.slice(tab, first, last)
+  local slice = {}
+
+  for i = math.max(0, first), math.min(last or first, #tab) do
+    table.insert(slice, tab[i])
+  end
+
+  return slice
+end
+
+function utils.updateAgent(agent, dt)
+  if agent.state == 'idle' then
+    if math.random() < .5 * dt then
+      local n = math.random(1, 4)
+      local next
+      if n == 1 then
+        next = utils.cellAt(utils.worldCoordinates(agent.x - 1, agent.y)) --  débile ce utils.cellAt(utils.worldCoordinates(...))
+        agent.reverse = true
+      elseif n == 2 then
+        next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y - 1)) --  débile ce utils.cellAt(utils.worldCoordinates(...))
+        agent.reverse = true
+      elseif n == 3 then
+        next = utils.cellAt(utils.worldCoordinates(agent.x + 1, agent.y)) --  débile ce utils.cellAt(utils.worldCoordinates(...))
+        agent.reverse = false
+      else
+        next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y + 1)) --  débile ce utils.cellAt(utils.worldCoordinates(...))
+        agent.reverse = false
+      end
+      if #next.objs == 0 then
+        agent.state = 'walking'
+        agent.t = 0
+        agent.path = utils.initPath(agent.x, agent.y, next.x, next.y)
+      end
+    elseif math.random() < .1 * dt then
+      agent.state = 'blink'
+      agent.t = 0
+    end
+  elseif agent.state == 'walking' then
+    agent.t = agent.path.update(agent.t, dt)
+    agent.x, agent.y = agent.path.at(agent.t)
+    if agent.t == 1 then
+      agent.state = 'idle'
+    end
+  elseif agent.state == 'blink' then
+    agent.t = agent.t + dt
+    if agent.t > 1 then
+      agent.state = 'idle'
+    end
+  end
+end
+
+function utils.drawAgent(agent)
+  local sx, sy = utils.worldCoordinates(agent.x, agent.y)
+  utils.drawQuad(agent.animations[agent.state], sx, sy, agent.reverse)
 end
 
 return utils

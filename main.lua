@@ -15,40 +15,79 @@ local bookTexture = love.graphics.newImage('assets/sprites/books_2.png')
 local test = utils.initQuad(bookTexture, 0, 7, 11, 6)
 local mag = utils.initQuad(bookTexture, 10, 4, 11, 9)
 local pile = utils.initQuad(bookTexture, 20, 0, 11, 13)
-local redac = {
-  love.graphics.newImage('assets/sprites/cpc_assets10.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets11.png')
-}
-local ackboo = utils.initAnimation(redac, 2, 20, 2, 17, 29, nil, 28)
-local izual = utils.initAnimation(redac, 2, 37, 2, 17, 29, nil, 28)
-local sebum = utils.initAnimation(redac, 2, 53, 2, 18, 29, nil, 28)
-local ellen = utils.initAnimation(redac, 2, 72, 2, 15, 29, nil, 28)
 
-
-agent = {
-  x = 10,
+local ackboo = {
+  x = 6,
   y = 40,
-  state = 'waiting',
+  state = 'idle',
+  reverse = math.random() < .5,
   t = 0,
-  path = nil
+  path = nil,
+  animations = {}
 }
 
-WAITING_MAX = 300
+local izual = {
+  x = 9,
+  y = 40,
+  state = 'idle',
+  reverse = math.random() < .5,
+  t = 0,
+  path = nil,
+  animations = {}
+}
 
-function agent.update(self, dt)
-  if self.state == 'waiting' then
-    if math.random() < .1 * dt then -- + .5 * math.min(self.since / WAITING_MAX, 1) then
-      self.state = 'walking'
-      local next = utils.cellAt(utils.worldCoordinates(math.random(-1, 1), math.random(-1, 1))) --  débile ce utils.cellAt(utils.worldCoordinates(...))
-      self.t = 0
-      print('youhou', next.x, next.y)
-      self.path = utils.initPath(self.x, self.y, next.x, next.y)
-    end
-  elseif self.state == 'walking' then
-    self.t = self.path.update(self.t, dt)
-    self.x, self.y = self.path.at(self.t)
-  end
-end
+local sebum = {
+  x = 12,
+  y = 40,
+  state = 'idle',
+  reverse = math.random() < .5,
+  t = 0,
+  path = nil,
+  animations = {}
+}
+
+local ellen = {
+  x = 15,
+  y = 40,
+  state = 'idle',
+  reverse = math.random() < .5,
+  t = 0,
+  path = nil,
+  animations = {}
+}
+
+local characters = {
+  love.graphics.newImage('assets/sprites/cpc_assets1.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets2.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets3.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets4.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets5.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets6.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets7.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets8.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets9.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets10.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets11.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets12.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets13.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets14.png'),
+  love.graphics.newImage('assets/sprites/cpc_assets15.png'),
+}
+local idleFrames = utils.slice(characters, 2)
+ackboo.animations.idle = utils.initAnimation(idleFrames, 2, 20, 2, 17, 29, nil, 28)
+izual.animations.idle = utils.initAnimation(idleFrames, 2, 37, 2, 17, 29, nil, 28)
+sebum.animations.idle = utils.initAnimation(idleFrames, 2, 53, 2, 18, 29, nil, 28)
+ellen.animations.idle = utils.initAnimation(idleFrames, 2, 72, 2, 15, 29, nil, 28)
+local blinkFrames = utils.slice(characters, 1, 2)
+ackboo.animations.blink = utils.initAnimation(blinkFrames, 2, 20, 2, 17, 29, nil, 28)
+izual.animations.blink = utils.initAnimation(blinkFrames, 2, 37, 2, 17, 29, nil, 28)
+sebum.animations.blink = utils.initAnimation(blinkFrames, 2, 53, 2, 18, 29, nil, 28)
+ellen.animations.blink = utils.initAnimation(blinkFrames, 2, 72, 2, 15, 29, nil, 28)
+local walkingFrames = utils.slice(characters, 10, 11)
+ackboo.animations.walking = utils.initAnimation(walkingFrames, 2, 20, 2, 17, 29, nil, 28)
+izual.animations.walking = utils.initAnimation(walkingFrames, 2, 37, 2, 17, 29, nil, 28)
+sebum.animations.walking = utils.initAnimation(walkingFrames, 2, 53, 2, 18, 29, nil, 28)
+ellen.animations.walking = utils.initAnimation(walkingFrames, 2, 72, 2, 15, 29, nil, 28)
 
 local W, H = love.graphics.getDimensions()
 local OX, OY = W / 2, H / 2
@@ -64,37 +103,37 @@ local fonts = {
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0" ..
     "123456789.,!?-+/():;%&`'*#=[]\""
   ),
-  ackboo = love.graphics.newFont('assets/fonts/comic-sans-ms/ComicSansMS3.ttf', 6 * utils.ratio),
-  izual = love.graphics.newFont('assets/fonts/CT ProLamina.ttf', 9 * utils.ratio),
-  sebum = love.graphics.newFont('assets/fonts/exmouth/exmouth_.ttf', 8 * utils.ratio),
-  ellen = love.graphics.newFont('assets/fonts/mortified_drip/MortifiedDrip.ttf', 7 * utils.ratio)
+  -- ackboo = love.graphics.newFont('assets/fonts/comic-sans-ms/ComicSansMS3.ttf', 6 * utils.ratio),
+  -- izual = love.graphics.newFont('assets/fonts/CT ProLamina.ttf', 9 * utils.ratio),
+  -- sebum = love.graphics.newFont('assets/fonts/exmouth/exmouth_.ttf', 8 * utils.ratio),
+  -- ellen = love.graphics.newFont('assets/fonts/mortified_drip/MortifiedDrip.ttf', 7 * utils.ratio)
 }
 
 local texts = {
-  ackboo = {
-    test = {
-      utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
-    },
-    pense = {}
-  },
-  izual = {
-    test = {
-      utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
-    },
-    pense = {}
-  },
-  sebum = {
-    test = {
-      utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
-    },
-    pense = {}
-  },
-  ellen = {
-    test = {
-      utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
-    },
-    pense = {}
-  }
+  -- ackboo = {
+  --   test = {
+  --     utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
+  --   },
+  --   pense = {}
+  -- },
+  -- izual = {
+  --   test = {
+  --     utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
+  --   },
+  --   pense = {}
+  -- },
+  -- sebum = {
+  --   test = {
+  --     utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
+  --   },
+  --   pense = {}
+  -- },
+  -- ellen = {
+  --   test = {
+  --     utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
+  --   },
+  --   pense = {}
+  -- }
 }
 
 local cell
@@ -107,9 +146,6 @@ local px0, py0 = 0, 24
 local px1, py1
 local px, py
 local plen, pt
-
-local P = 0
-local PATH = utils.initPath(0, 0, 5, 15)
 
 local function throw()
   py1 = utils.round(py1)
@@ -149,12 +185,10 @@ function love.update(dt)
       table.insert(cell.objs, {quad = ({plane, test, mag, pile})[math.random(1, 4)], h = 1})
     end
   end
-  P = math.min(P + 6 * dt, 1)
-  ackboo:update(dt)
-  izual:update(dt)
-  sebum:update(dt)
-  ellen:update(dt)
-  agent:update(dt)
+  utils.updateAgent(ackboo, dt)
+  utils.updateAgent(izual, dt)
+  utils.updateAgent(sebum, dt)
+  utils.updateAgent(ellen, dt)
 end
 
 love.graphics.setLineStyle('rough')
@@ -196,14 +230,14 @@ function love.draw()
       end
     end
   end
-  utils.drawQuad(ackboo, utils.worldCoordinates(PATH.at(P)))
-  utils.drawQuad(izual, utils.worldCoordinates(5, 40))
-  utils.drawQuad(sebum, utils.worldCoordinates(10, 40))
-  utils.drawQuad(ellen, utils.worldCoordinates(15, 40))
-  utils.drawText(texts.ackboo.test[1], utils.worldCoordinates(PATH.at(P)))
-  utils.drawText(texts.izual.test[1], utils.worldCoordinates(5, 40))
-  utils.drawText(texts.sebum.test[1], utils.worldCoordinates(agent.x, agent.y))
-  utils.drawText(texts.ellen.test[1], utils.worldCoordinates(15, 40))
+  utils.drawAgent(ackboo)
+  utils.drawAgent(izual)
+  utils.drawAgent(sebum)
+  utils.drawAgent(ellen)
+  -- utils.drawText(texts.ackboo.test[1], utils.worldCoordinates(PATH.at(P)))
+  -- utils.drawText(texts.izual.test[1], utils.worldCoordinates(5, 40))
+  -- utils.drawText(texts.sebum.test[1], sx, sy)
+  -- utils.drawText(texts.ellen.test[1], utils.worldCoordinates(15, 40))
 end
 
 function love.mousemoved(x, y)
