@@ -134,6 +134,7 @@ function utils.slice(tab, first, last)
 end
 
 function utils.updateAgent(agent, dt)
+  agent.animations[agent.state]:update(dt)
   if agent.state == 'idle' then
     if math.random() < .5 * dt then
       local n = math.random(1, 4)

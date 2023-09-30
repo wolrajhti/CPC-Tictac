@@ -16,6 +16,16 @@ local test = utils.initQuad(bookTexture, 0, 7, 11, 6)
 local mag = utils.initQuad(bookTexture, 10, 4, 11, 9)
 local pile = utils.initQuad(bookTexture, 20, 0, 11, 13)
 
+local ivan = {
+  x = 6,
+  y = 20,
+  state = 'idle',
+  reverse = math.random() < .5,
+  t = 0,
+  path = nil,
+  animations = {}
+}
+
 local ackboo = {
   x = 6,
   y = 40,
@@ -74,16 +84,19 @@ local characters = {
   love.graphics.newImage('assets/sprites/cpc_assets15.png'),
 }
 local idleFrames = utils.slice(characters, 2)
+ivan.animations.idle = utils.initAnimation(idleFrames, 2, 0, 0, 21, 31, nil, 28)
 ackboo.animations.idle = utils.initAnimation(idleFrames, 2, 20, 2, 17, 29, nil, 28)
 izual.animations.idle = utils.initAnimation(idleFrames, 2, 37, 2, 17, 29, nil, 28)
 sebum.animations.idle = utils.initAnimation(idleFrames, 2, 53, 2, 18, 29, nil, 28)
 ellen.animations.idle = utils.initAnimation(idleFrames, 2, 72, 2, 15, 29, nil, 28)
 local blinkFrames = utils.slice(characters, 1, 2)
+ivan.animations.blink = utils.initAnimation(blinkFrames, 2, 0, 0, 21, 31, nil, 28)
 ackboo.animations.blink = utils.initAnimation(blinkFrames, 2, 20, 2, 17, 29, nil, 28)
 izual.animations.blink = utils.initAnimation(blinkFrames, 2, 37, 2, 17, 29, nil, 28)
 sebum.animations.blink = utils.initAnimation(blinkFrames, 2, 53, 2, 18, 29, nil, 28)
 ellen.animations.blink = utils.initAnimation(blinkFrames, 2, 72, 2, 15, 29, nil, 28)
 local walkingFrames = utils.slice(characters, 10, 11)
+ivan.animations.walking = utils.initAnimation(walkingFrames, 2, 0, 0, 21, 31, nil, 28)
 ackboo.animations.walking = utils.initAnimation(walkingFrames, 2, 20, 2, 17, 29, nil, 28)
 izual.animations.walking = utils.initAnimation(walkingFrames, 2, 37, 2, 17, 29, nil, 28)
 sebum.animations.walking = utils.initAnimation(walkingFrames, 2, 53, 2, 18, 29, nil, 28)
@@ -185,6 +198,7 @@ function love.update(dt)
       table.insert(cell.objs, {quad = ({plane, test, mag, pile})[math.random(1, 4)], h = 1})
     end
   end
+  utils.updateAgent(ivan, dt)
   utils.updateAgent(ackboo, dt)
   utils.updateAgent(izual, dt)
   utils.updateAgent(sebum, dt)
@@ -230,6 +244,7 @@ function love.draw()
       end
     end
   end
+  utils.drawAgent(ivan)
   utils.drawAgent(ackboo)
   utils.drawAgent(izual)
   utils.drawAgent(sebum)
