@@ -17,8 +17,8 @@ local mag = utils.initQuad(bookTexture, 10, 4, 11, 9)
 local pile = utils.initQuad(bookTexture, 20, 0, 11, 13)
 
 local ivan = {
-  x = 6,
-  y = 20,
+  x = 2,
+  y = 11,
   state = 'idle',
   reverse = math.random() < .5,
   t = 0,
@@ -163,7 +163,9 @@ local gameState = {
   x, y, -- position du viseur
   updateCell = function(self, x, y)
     self.cell = utils.cellAt(x, y)
-    self.aimingSpeed = 2 + .05 * self.cell.x
+    if self.cell then
+      self.aimingSpeed = 2 + .05 * self.cell.x
+    end
   end,
   update = function(self, dt)
     if self.aiming then
@@ -188,28 +190,23 @@ local gameState = {
   end,
   throw = function(self)
     local p = {
-      x1 = self.PX1,
-      y1 = self.PY1,
-      update = function(self, dt)
-        self.t = math.min(self.t + self.speed * dt / self.len, 1)
-        self.x = self.x1 + self.t * (self.x2 - self.x1)
-        self.y = self.y1 + self.t * (self.y2 - self.y1)
-        if self.t == 1 then
-          self.update = nil
-        end
-      end
+      x2 = self.x + self.cell.y - utils.targetHeight(self.cell) - utils.round(self.y),
+      y2 = self.cell.y
     }
-    p.speed = self.FLYING_SPEED
-    p.x2 = self.x + self.cell.y - utils.targetHeight(self.cell) - utils.round(self.y)
-    p.y2 = self.cell.y
-    p.len = math.sqrt((p.x2 - p.x1)^2 + (p.y2 - p.y1)^2)
-    p.x, p.y = p.x1, p.y1
-    p.t = 0
-    p.quad = ({plane, test, mag, pile})[math.random(1, 4)]
-    p.h = 1
     local cell = utils.cellAt(utils.worldCoordinates(p.x2, p.y2))
-    table.insert(cell.objs, p)
-    self.aiming = false
+    if cell then
+      p.x1 = self.PX1
+      p.y1 = self.PY1
+      p.speed = self.FLYING_SPEED
+      p.len = math.sqrt((p.x2 - p.x1)^2 + (p.y2 - p.y1)^2)
+      p.x, p.y = p.x1, p.y1
+      p.t = 0
+      p.quad = ({plane, test, mag, pile})[math.random(1, 4)]
+      p.h = 1
+      p.update = utils.updatePlane
+      table.insert(cell.objs, p)
+      self.aiming = false
+    end
   end
 }
 
@@ -238,6 +235,7 @@ love.graphics.setLineWidth(utils.ratio)
 function love.draw()
   love.graphics.setColor(1, 1, 1)
   utils.drawImage(background, OX, OY)
+  utils.drawWalkingAreas()
   if gameState.cell then
     utils.drawImage(cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
     utils.drawQuad(ruler, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))

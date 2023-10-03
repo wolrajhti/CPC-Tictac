@@ -2,15 +2,37 @@ local utils = {
   ratio = 1,
   cw = 16,
   ch = 4,
-  cells = {}
+  cells = {},
+  walkableAreas = {
+    -- ivan
+    {x = 1, y = 4, w = 1, h = 12},
+    {x = 2, y = 6, w = 1, h = 10},
+    {x = 3, y = 10, w = 1, h = 3},
+    -- redac
+    {x = 3, y = 36, w = 15, h = 5},
+    {x = 2, y = 41, w = 17, h = 6},
+    {x = 1, y = 47, w = 19, h = 2}
+  }
 }
+
+function utils.isWalkable(x, y)
+  for i, wa in ipairs(utils.walkableAreas) do
+    if wa.x <= x and x < wa.x + wa.w and
+       wa.y <= y and y < wa.y + wa.h then
+      return true
+    end
+  end
+  return false
+end
 
 function utils.cellAt(x, y)
   x, y = utils.cellCoordinates(x, y)
   if not utils.cells[x] then
-    utils.cells[x] = {[y] = {x = x, y = y, objs = {}}} -- h pour tester
+    if not utils.isWalkable(x, y) then return nil end
+    utils.cells[x] = {[y] = {x = x, y = y, objs = {}}}
   elseif not utils.cells[x][y] then
-    utils.cells[x][y] = {x = x, y = y, objs = {}} -- h pour tester
+    if not utils.isWalkable(x, y) then return nil end
+    utils.cells[x][y] = {x = x, y = y, objs = {}}
   end
   return utils.cells[x][y]
 end
@@ -24,11 +46,12 @@ function utils.targetHeight(cell)
 end
 
 function utils.worldCoordinates(x, y)
-  return (x + .5) * utils.cw * utils.ratio, (y + .5) * utils.ch * utils.ratio
+  return x * utils.cw * utils.ratio, y * utils.ch * utils.ratio
 end
 
 function utils.cellCoordinates(x, y)
-  return math.floor(x / (utils.cw * utils.ratio)), math.floor(y / (utils.ch * utils.ratio))
+  return math.floor((x + .5 * utils.cw * utils.ratio) / (utils.cw * utils.ratio)),
+         math.floor((y + .5 * utils.ch * utils.ratio) / (utils.ch * utils.ratio))
 end
 
 function utils.initImage(filename)
@@ -137,25 +160,30 @@ function utils.updateAgent(agent, dt)
   agent.animations[agent.state]:update(dt)
   if agent.state == 'idle' then
     if math.random() < .5 * dt then
-      local n = math.random(1, 4)
+      local candidates = {}
       local next
-      if n == 1 then
-        next = utils.cellAt(utils.worldCoordinates(agent.x - 1, agent.y)) --  débile ce utils.cellAt(utils.worldCoordinates(...))
-        agent.reverse = true
-      elseif n == 2 then
-        next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y - 1)) --  débile ce utils.cellAt(utils.worldCoordinates(...))
-        agent.reverse = true
-      elseif n == 3 then
-        next = utils.cellAt(utils.worldCoordinates(agent.x + 1, agent.y)) --  débile ce utils.cellAt(utils.worldCoordinates(...))
-        agent.reverse = false
-      else
-        next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y + 1)) --  débile ce utils.cellAt(utils.worldCoordinates(...))
-        agent.reverse = false
+      next = utils.cellAt(utils.worldCoordinates(agent.x - 1, agent.y))
+      if next then
+        table.insert(candidates, {cell = next, reverse = true})
       end
-      if #next.objs == 0 then
+      next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y - 1))
+      if next then
+        table.insert(candidates, {cell = next, reverse = true})
+      end
+      next = utils.cellAt(utils.worldCoordinates(agent.x + 1, agent.y))
+      if next then
+        table.insert(candidates, {cell = next, reverse = false})
+      end
+      next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y + 1))
+      if next then
+        table.insert(candidates, {cell = next, reverse = false})
+      end
+      if #candidates > 0 then
+        next = candidates[math.random(1, #candidates)]
         agent.state = 'walking'
         agent.t = 0
-        agent.path = utils.initPath(agent.x, agent.y, next.x, next.y)
+        agent.path = utils.initPath(agent.x, agent.y, next.cell.x, next.cell.y)
+        agent.reverse = next.reverse
       end
     elseif math.random() < .1 * dt then
       agent.state = 'blink'
@@ -178,6 +206,32 @@ end
 function utils.drawAgent(agent)
   local sx, sy = utils.worldCoordinates(agent.x, agent.y)
   utils.drawQuad(agent.animations[agent.state], sx, sy, agent.reverse)
+end
+
+function utils.updatePlane(self, dt)
+  self.t = math.min(self.t + self.speed * dt / self.len, 1)
+  self.x = self.x1 + self.t * (self.x2 - self.x1)
+  self.y = self.y1 + self.t * (self.y2 - self.y1)
+  if self.t == 1 then
+    self.update = nil
+  end
+end
+
+local x, y
+function utils.drawWalkingAreas()
+  r, g, b, a = love.graphics.getColor()
+  love.graphics.setColor(1, .7, .7, .5)
+  for i, wa in ipairs(utils.walkableAreas) do
+    x, y = utils.worldCoordinates(wa.x, wa.y)
+    love.graphics.rectangle(
+      'fill',
+      x - .5 * utils.cw * utils.ratio,
+      y - .5 * utils.ch * utils.ratio,
+      wa.w * utils.cw * utils.ratio,
+      wa.h * utils.ch * utils.ratio
+    )
+  end
+  love.graphics.setColor(r, g, b, a)
 end
 
 return utils
