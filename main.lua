@@ -151,51 +151,78 @@ local texts = {
 
 local cell
 local aiming = false
-local t0
 
-local flying = false
-local PSPEED = 50
-local px0, py0 = 0, 24
-local px1, py1
-local px, py
-local plen, pt
-
-local function throw()
-  py1 = utils.round(py1)
-  px1 = px1 + cell.y - utils.targetHeight(cell) - utils.round(py1)
-  py1 = cell.y
-  aiming = false
-  flying = true
-  plen = math.sqrt((px1 - px0)^2 + (py1 - py0)^2)
-  px = px0
-  py = py0
-  pt = 0
-end
-
-local t = 0
-local SPEED = 1
+local gameState = {
+  AIMING_WINDOW = 6, -- temps laissé au joueur pour viser
+  PX1 = 0, PY1 = 24, -- départ des avions
+  FLYING_SPEED = 50, -- vitesse des avions
+  cell, -- case survolée
+  aiming, -- bool
+  aimingSpeed, -- vitesse de déplacement du viseur
+  t0, t, -- date de début de la visé et date actuelle
+  x, y, -- position du viseur
+  updateCell = function(self, x, y)
+    self.cell = utils.cellAt(x, y)
+    self.aimingSpeed = 2 + .05 * self.cell.x
+  end,
+  update = function(self, dt)
+    if self.aiming then
+      self.t = self.t + self.aimingSpeed * dt
+      local u, offset = self.t % 2, 0
+      if u > 1 then
+        offset = -10 * (2 - u)
+      else
+        offset = -10 * u
+      end
+      self.y = self.cell.y + offset
+      if self.t > self.t0 + 6 then
+        self:throw()
+      end
+    end
+  end,
+  aim = function(self)
+    self.aiming = true
+    self.x, self.y = self.cell.x, self.cell.y
+    self.t = 2 * math.random()
+    self.t0 = self.t
+  end,
+  throw = function(self)
+    local p = {
+      x1 = self.PX1,
+      y1 = self.PY1,
+      update = function(self, dt)
+        self.t = math.min(self.t + self.speed * dt / self.len, 1)
+        self.x = self.x1 + self.t * (self.x2 - self.x1)
+        self.y = self.y1 + self.t * (self.y2 - self.y1)
+        if self.t == 1 then
+          self.update = nil
+        end
+      end
+    }
+    p.speed = self.FLYING_SPEED
+    p.x2 = self.x + self.cell.y - utils.targetHeight(self.cell) - utils.round(self.y)
+    p.y2 = self.cell.y
+    p.len = math.sqrt((p.x2 - p.x1)^2 + (p.y2 - p.y1)^2)
+    p.x, p.y = p.x1, p.y1
+    p.t = 0
+    p.quad = ({plane, test, mag, pile})[math.random(1, 4)]
+    p.h = 1
+    local cell = utils.cellAt(utils.worldCoordinates(p.x2, p.y2))
+    table.insert(cell.objs, p)
+    self.aiming = false
+  end
+}
 
 function love.update(dt)
-  if aiming then
-    t = t + SPEED * dt
-    local u, offset = t % 2, 0
-    if u > 1 then
-      offset = -10 * (2 - u)
-    else
-      offset = -10 * u
-    end
-    py1 = cell.y + offset
-    if t > t0 + 6 then
-      throw()
-    end
-  elseif flying then
-    pt = math.min(pt + PSPEED * dt / plen, 1)
-    px = px0 + pt * (px1 - px0)
-    py = py0 + pt * (py1 - py0)
-    if pt == 1 then
-      flying = false
-      local cell = utils.cellAt(utils.worldCoordinates(px, py))
-      table.insert(cell.objs, {quad = ({plane, test, mag, pile})[math.random(1, 4)], h = 1})
+  gameState:update(dt)
+  for x, row in pairs(utils.cells) do
+    for y, cell in pairs(row) do
+      local h = 0
+      for k, obj in ipairs(cell.objs) do
+        if obj.update then
+          obj:update(dt)
+        end
+      end
     end
   end
   utils.updateAgent(ivan, dt)
@@ -211,36 +238,27 @@ love.graphics.setLineWidth(utils.ratio)
 function love.draw()
   love.graphics.setColor(1, 1, 1)
   utils.drawImage(background, OX, OY)
-  if cell then
-    utils.drawImage(cursor, utils.worldCoordinates(cell.x, cell.y))
-    utils.drawQuad(ruler, utils.worldCoordinates(cell.x, cell.y))
+  if gameState.cell then
+    utils.drawImage(cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
+    utils.drawQuad(ruler, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
     for i = -9, 0 do
-      if i <= cell.x - 17 then -- à ajuster
+      if i <= gameState.cell.x - 17 then -- à ajuster
         love.graphics.setColor(233 / 255, 54 / 255, 54 / 255)
       else
         love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
       end
-      utils.drawQuad(tick, utils.worldCoordinates(cell.x, cell.y + i))
+      utils.drawQuad(tick, utils.worldCoordinates(gameState.cell.x, gameState.cell.y + i))
     end
     love.graphics.setColor(1, 1, 1)
-    utils.drawQuad(goal, utils.worldCoordinates(cell.x, cell.y - utils.targetHeight(cell)))
-    if aiming then
-      utils.drawQuad(target, utils.worldCoordinates(cell.x, py1))
+    utils.drawQuad(goal, utils.worldCoordinates(gameState.cell.x, gameState.cell.y - utils.targetHeight(gameState.cell)))
+    if gameState.aiming then
+      utils.drawQuad(target, utils.worldCoordinates(gameState.x, gameState.y))
     end
-  end
-  if flying then
-    -- love.graphics.setColor(0, 0, 0)
-    -- local a, b = utils.worldCoordinates(px0, py0)
-    -- love.graphics.line(a, b, utils.worldCoordinates(px1, py1))
-    -- love.graphics.setColor(1, 1, 1)
-    utils.drawQuad(plane, utils.worldCoordinates(px, py))
   end
   for x, row in pairs(utils.cells) do
     for y, cell in pairs(row) do
-      local h = 0
       for k, obj in ipairs(cell.objs) do
-        utils.drawQuad(obj.quad, utils.worldCoordinates(x, y - h))
-        h = h + obj.h
+        utils.drawQuad(obj.quad, utils.worldCoordinates(obj.x, obj.y))
       end
     end
   end
@@ -256,24 +274,20 @@ function love.draw()
 end
 
 function love.mousemoved(x, y)
-  if not aiming then
-    cell = utils.cellAt(x, y)
-    SPEED = 2 + .05 * cell.x
+  if not gameState.aiming then
+    gameState:updateCell(x, y)
   end
 end
 
 function love.mousepressed(x, y, button)
   if button == 1 then
-    aiming = true
-    px1, py1 = cell.x, cell.y
-    t = 2 * math.random()
-    t0 = t
+    gameState:aim()
   end
 end
 
 function love.mousereleased(x, y, button)
-  if button == 1 and aiming then
-    throw()
+  if button == 1 and gameState.aiming then
+    gameState:throw()
   end
 end
 
