@@ -13,8 +13,18 @@ local utils = {
     {x = 3, y = 36, w = 15, h = 5},
     {x = 2, y = 41, w = 17, h = 6},
     {x = 1, y = 47, w = 19, h = 2}
-  }
+  },
+  r, g, b, a
 }
+
+local r, g, b, a
+function utils.getColor()
+  r, g, b, a = love.graphics.getColor()
+end
+
+function utils.setColor()
+  love.graphics.setColor(r, g, b, a)
+end
 
 function utils.isWalkable(x, y)
   for i, wa in ipairs(utils.walkableAreas) do
@@ -52,10 +62,27 @@ function utils.updateCells(dt)
   end
 end
 
-function utils.drawCells()
+function utils.drawCells(gameState) -- beurk beurk beurk
+  if gameState.cell then
+    utils.getColor()
+  end
   for i, cell in ipairs(utils.orderedCells) do
-    for j, obj in ipairs(cell.objs) do
-      utils.drawQuad(obj.quad, utils.worldCoordinates(obj.x, obj.y))
+    if cell.agent and not cell.agent.behind then
+      utils.drawAgent(cell.agent)
+    end
+    if #cell.objs > 0 then
+      if gameState.cell and gameState.cell.y < cell.y then
+        love.graphics.setColor(r, g, b, .5)
+      end
+      for j, obj in ipairs(cell.objs) do
+        utils.drawQuad(obj.quad, utils.worldCoordinates(obj.x, obj.y))
+      end
+      if gameState.cell and gameState.cell.y < cell.y then
+        utils.setColor()
+      end
+    end
+    if cell.agent and cell.agent.behind then
+      utils.drawAgent(cell.agent)
     end
     for j, flying in ipairs(cell.flying) do
       utils.drawQuad(flying.quad, utils.worldCoordinates(flying.x, flying.y))
@@ -63,6 +90,9 @@ function utils.drawCells()
     for j, missed in ipairs(cell.missed) do
       utils.drawQuad(missed.quad, utils.worldCoordinates(missed.x, missed.y))
     end
+  end
+  if gameState.cell then
+    utils.setColor()
   end
 end
 
@@ -161,9 +191,8 @@ function utils.drawQuad(data, x, y, reverse) -- reverse pas terrible
   love.graphics.draw(data.texture, data.quad, x, y, 0, utils.ternary(reverse, -1, 1) * utils.ratio, utils.ratio, data.ox, data.oy)
 end
 
-local r, g, b, a
 function utils.drawText(data, x, y)
-  r, g, b, a = love.graphics.getColor()
+  utils.getColor()
   love.graphics.setColor(0, 0, 0, 0.3)
   love.graphics.rectangle('fill',
     x - (data.w / 2 + utils.ratio),
@@ -177,7 +206,7 @@ function utils.drawText(data, x, y)
   -- voir si plus performant si on utilise utils.ratio, utils.ratio à la place de 1, 1
   love.graphics.draw(text, x, y - 29 * utils.ratio, 0, 1, 1, data.w / 2, data.h + 3 * utils.ratio)
   love.graphics.circle('fill', x, y, 4)
-  love.graphics.setColor(r, g, b, a)
+  utils.setColor(r, g, b, a)
 end
 
 function utils.ternary(cond, T, F)
@@ -205,27 +234,32 @@ function utils.updateAgent(agent, dt)
       local candidates = {}
       local next
       next = utils.cellAt(utils.worldCoordinates(agent.x - 1, agent.y))
-      if next.walkable then
+      if next.walkable and not next.agent and agent.from ~= next then
         table.insert(candidates, {cell = next, reverse = true})
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y - 1))
-      if next.walkable then
+      if next.walkable and not next.agent and agent.from ~= next then
         table.insert(candidates, {cell = next, reverse = true})
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x + 1, agent.y))
-      if next.walkable then
+      if next.walkable and not next.agent and agent.from ~= next then
         table.insert(candidates, {cell = next, reverse = false})
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y + 1))
-      if next.walkable then
+      if next.walkable and not next.agent and agent.from ~= next then
         table.insert(candidates, {cell = next, reverse = false})
       end
       if #candidates > 0 then
         next = candidates[math.random(1, #candidates)]
+        agent.from = agent.to
+        agent.to.agent = nil
+        agent.to = next.cell
+        next.cell.agent = agent
         agent.state = 'walking'
         agent.t = 0
         agent.path = utils.initPath(agent.x, agent.y, next.cell.x, next.cell.y)
         agent.reverse = next.reverse
+        agent.behind = agent.to.y < agent.from.y
       end
     elseif math.random() < .1 * dt then
       agent.state = 'blink'
@@ -261,7 +295,7 @@ end
 
 local x, y
 function utils.drawWalkingAreas()
-  r, g, b, a = love.graphics.getColor()
+  utils.getColor()
   love.graphics.setColor(1, .7, .7, .5)
   for i, wa in ipairs(utils.walkableAreas) do
     x, y = utils.worldCoordinates(wa.x, wa.y)
@@ -273,7 +307,7 @@ function utils.drawWalkingAreas()
       wa.h * utils.ch * utils.ratio
     )
   end
-  love.graphics.setColor(r, g, b, a)
+  utils.setColor()
 end
 
 return utils

@@ -66,6 +66,17 @@ local ellen = {
   animations = {}
 }
 
+ivan.to = utils.cellAt(utils.worldCoordinates(ivan.x, ivan.y))
+ackboo.to = utils.cellAt(utils.worldCoordinates(ackboo.x, ackboo.y))
+izual.to = utils.cellAt(utils.worldCoordinates(izual.x, izual.y))
+sebum.to = utils.cellAt(utils.worldCoordinates(sebum.x, sebum.y))
+ellen.to = utils.cellAt(utils.worldCoordinates(ellen.x, ellen.y))
+ivan.to.agent = ivan
+ackboo.to.agent = ackboo
+izual.to.agent = izual
+sebum.to.agent = sebum
+ellen.to.agent = ellen
+
 local characters = {
   love.graphics.newImage('assets/sprites/cpc_assets1.png'),
   love.graphics.newImage('assets/sprites/cpc_assets2.png'),
@@ -244,12 +255,7 @@ function love.draw()
       utils.drawQuad(target, utils.worldCoordinates(gameState.x, gameState.y))
     end
   end
-  utils.drawCells()
-  utils.drawAgent(ivan)
-  utils.drawAgent(ackboo)
-  utils.drawAgent(izual)
-  utils.drawAgent(sebum)
-  utils.drawAgent(ellen)
+  utils.drawCells(gameState)
   -- utils.drawText(texts.ackboo.test[1], utils.worldCoordinates(PATH.at(P)))
   -- utils.drawText(texts.izual.test[1], utils.worldCoordinates(5, 40))
   -- utils.drawText(texts.sebum.test[1], sx, sy)
