@@ -72,10 +72,14 @@ function utils.drawCells(gameState) -- beurk beurk beurk
     end
     if #cell.objs > 0 then
       if gameState.cell and gameState.cell.y < cell.y then
-        love.graphics.setColor(r, g, b, .5)
+        love.graphics.setColor(r, g, b, .2)
       end
       for j, obj in ipairs(cell.objs) do
-        utils.drawQuad(obj.quad, utils.worldCoordinates(obj.x, obj.y))
+        if obj.rand then
+          utils.drawQuad(obj.quad, utils.worldCoordinates(obj.x + obj.rand, obj.y)) -- bonne idée !
+        else
+          utils.drawQuad(obj.quad, utils.worldCoordinates(obj.x, obj.y))
+        end
       end
       if gameState.cell and gameState.cell.y < cell.y then
         utils.setColor()
@@ -282,6 +286,7 @@ end
 function utils.drawAgent(agent)
   local sx, sy = utils.worldCoordinates(agent.x, agent.y)
   utils.drawQuad(agent.animations[agent.state], sx, sy, agent.reverse)
+  utils.getColor()
 end
 
 function utils.updatePlane(self, dt)
@@ -307,6 +312,26 @@ function utils.drawWalkingAreas()
       wa.h * utils.ch * utils.ratio
     )
   end
+  utils.setColor()
+end
+
+function utils.drawCalendar(gameState)
+  utils.getColor()
+  -- if gameState.weekend then
+  --   love.graphics.setColor(.2, 1, .2)
+  -- elseif gameState.endOfTheMonth then
+  --   love.graphics.setColor(1, 1, .2)
+  -- else
+    love.graphics.setColor(172 / 255, 50 / 255, 50 / 255, 100 / 255)
+  -- end
+  local day
+  for i = 1, gameState.day - 1 do
+    day = gameState.CALENDAR_CELLS[i]
+    love.graphics.rectangle('fill', day[1] * utils.ratio, day[2] * utils.ratio, 2 * utils.ratio, 2 * utils.ratio)
+  end
+  day = gameState.CALENDAR_CELLS[gameState.day]
+  love.graphics.rectangle('fill', day[1] * utils.ratio, day[2] * utils.ratio, 1 * utils.ratio, 2 * utils.ratio)
+  love.graphics.rectangle('fill', (day[1] + 1) * utils.ratio, (day[2] + 1) * utils.ratio, 1 * utils.ratio, 1 * utils.ratio)
   utils.setColor()
 end
 

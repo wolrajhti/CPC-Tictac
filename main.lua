@@ -12,9 +12,19 @@ local goal = utils.initQuad(texture, 8, 12, 8, 8)
 local target = utils.initQuad(texture, 17, 17, 14, 14)
 local plane = utils.initQuad(texture, 20, 39, 9, 5)
 local bookTexture = love.graphics.newImage('assets/sprites/books_2.png')
-local test = utils.initQuad(bookTexture, 0, 7, 11, 6)
-local mag = utils.initQuad(bookTexture, 10, 4, 11, 9)
-local pile = utils.initQuad(bookTexture, 20, 0, 11, 13)
+local test = utils.initQuad(bookTexture, 0, 64, 11, 7)
+local mags = {
+  utils.initQuad(bookTexture, 10, 61, 11, 10, nil, 7),
+  utils.initQuad(bookTexture, 20, 57, 11, 14, nil, 11),
+  utils.initQuad(bookTexture, 30, 53, 11, 18, nil, 15),
+  utils.initQuad(bookTexture, 40, 49, 11, 22, nil, 19),
+  utils.initQuad(bookTexture, 50, 45, 11, 26, nil, 23),
+  utils.initQuad(bookTexture, 60, 41, 11, 30, nil, 27),
+  utils.initQuad(bookTexture, 70, 37, 11, 34, nil, 31),
+  utils.initQuad(bookTexture, 80, 33, 11, 38, nil, 35),
+  utils.initQuad(bookTexture, 90, 29, 11, 42, nil, 39),
+  utils.initQuad(bookTexture, 100, 25, 11, 46, nil, 43)
+}
 
 local ivan = {
   x = 2,
@@ -172,10 +182,35 @@ local gameState = {
   aimingSpeed, -- vitesse de déplacement du viseur
   t0, t, -- date de début de la visé et date actuelle
   x, y, -- position du viseur
+  day = 1,
+  time = 0,
+  TIME_SPEED = 2, -- à ajuster
+  CALENDAR_X = 131,
+  CALENDAR_Y = 110,
+  CALENDAR_CELLS = {
+                            {131, 110}, {133, 110}, {135, 110}, {137, 110}, {139, 110},
+    {127, 112}, {129, 112}, {131, 112}, {133, 112}, {135, 112}, {137, 112}, {139, 112},
+    {127, 114}, {129, 114}, {131, 114}, {133, 114}, {135, 114}, {137, 114}, {139, 114},
+    {127, 116}, {129, 116}, {131, 116}, {133, 116}, {135, 116}, {137, 116}, {139, 116},
+    {127, 118}, {129, 118}, {131, 118}, {133, 118}
+  },
   updateCell = function(self, x, y)
     self.cell = utils.cellAt(x, y)
   end,
   update = function(self, dt)
+    self.time = self.time + self.TIME_SPEED * dt
+    while self.time > 1 do
+      self.time = self.time - 1
+      self.day = self.day + 1
+      if self.day > 30 then
+        self.day = self.day - 30
+      end
+      self.endOfTheMonth = self.day == 30
+      self.weekend = self.day == 6 or self.day == 7 or
+                     self.day == 13 or  self.day == 14 or
+                     self.day == 20 or self.day == 21 or
+                     self.day == 27 or self.day == 28
+    end
     if self.aiming then
       self.t = self.t + self.aimingSpeed * dt
       local u, offset = self.t % 2, 0
@@ -211,6 +246,7 @@ local gameState = {
     p.quad = plane
     p.h = 1
     p.update = utils.updatePlane
+    p.rand = math.random() - .25
     local cell = utils.cellAt(utils.worldCoordinates(p.x2, p.y2))
     if cell.walkable then
       table.insert(cell.flying, p)
@@ -237,6 +273,7 @@ love.graphics.setLineWidth(utils.ratio)
 function love.draw()
   love.graphics.setColor(1, 1, 1)
   utils.drawImage(background, OX, OY)
+  utils.drawCalendar(gameState)
   utils.drawWalkingAreas()
   if gameState.cell then
     utils.drawImage(cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
