@@ -163,9 +163,6 @@ local gameState = {
   x, y, -- position du viseur
   updateCell = function(self, x, y)
     self.cell = utils.cellAt(x, y)
-    if self.cell then
-      self.aimingSpeed = 2 + .05 * self.cell.x
-    end
   end,
   update = function(self, dt)
     if self.aiming then
@@ -185,43 +182,37 @@ local gameState = {
   aim = function(self)
     self.aiming = true
     self.x, self.y = self.cell.x, self.cell.y
+    self.aimingSpeed = 2 + .05 * self.cell.x
     self.t = 2 * math.random()
     self.t0 = self.t
   end,
   throw = function(self)
     local p = {
+      x1 = self.PX1,
+      y1 = self.PY1,
+      speed = self.FLYING_SPEED,
       x2 = self.x + self.cell.y - utils.targetHeight(self.cell) - utils.round(self.y),
       y2 = self.cell.y
     }
+    p.len = math.sqrt((p.x2 - p.x1)^2 + (p.y2 - p.y1)^2)
+    p.x, p.y = p.x1, p.y1
+    p.t = 0
+    p.quad = plane
+    p.h = 1
+    p.update = utils.updatePlane
     local cell = utils.cellAt(utils.worldCoordinates(p.x2, p.y2))
-    if cell then
-      p.x1 = self.PX1
-      p.y1 = self.PY1
-      p.speed = self.FLYING_SPEED
-      p.len = math.sqrt((p.x2 - p.x1)^2 + (p.y2 - p.y1)^2)
-      p.x, p.y = p.x1, p.y1
-      p.t = 0
-      p.quad = ({plane, test, mag, pile})[math.random(1, 4)]
-      p.h = 1
-      p.update = utils.updatePlane
-      table.insert(cell.objs, p)
-      self.aiming = false
+    if cell.walkable then
+      table.insert(cell.flying, p)
+    else
+      table.insert(cell.missed, p)
     end
+    self.aiming = false
   end
 }
 
 function love.update(dt)
   gameState:update(dt)
-  for x, row in pairs(utils.cells) do
-    for y, cell in pairs(row) do
-      local h = 0
-      for k, obj in ipairs(cell.objs) do
-        if obj.update then
-          obj:update(dt)
-        end
-      end
-    end
-  end
+  utils.updateCells(dt)
   utils.updateAgent(ivan, dt)
   utils.updateAgent(ackboo, dt)
   utils.updateAgent(izual, dt)
@@ -253,13 +244,7 @@ function love.draw()
       utils.drawQuad(target, utils.worldCoordinates(gameState.x, gameState.y))
     end
   end
-  for x, row in pairs(utils.cells) do
-    for y, cell in pairs(row) do
-      for k, obj in ipairs(cell.objs) do
-        utils.drawQuad(obj.quad, utils.worldCoordinates(obj.x, obj.y))
-      end
-    end
-  end
+  utils.drawCells()
   utils.drawAgent(ivan)
   utils.drawAgent(ackboo)
   utils.drawAgent(izual)

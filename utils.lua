@@ -3,6 +3,7 @@ local utils = {
   cw = 16,
   ch = 4,
   cells = {},
+  orderedCells = {},
   walkableAreas = {
     -- ivan
     {x = 1, y = 4, w = 1, h = 12},
@@ -25,14 +26,55 @@ function utils.isWalkable(x, y)
   return false
 end
 
+function utils.cellComp(c1, c2)
+  return c1.y < c2.y
+end
+
+function utils.sortCells()
+  table.sort(utils.orderedCells, utils.cellComp)
+end
+
+function utils.updateCells(dt)
+  for i, cell in ipairs(utils.orderedCells) do
+    for i = #cell.missed, 1, -1 do
+      cell.missed[i]:update(dt)
+      if cell.missed[i].t == 1 then
+        -- todo draw explosion
+        table.remove(cell.missed, i)
+      end
+    end
+    for i = #cell.flying, 1, -1 do
+      cell.flying[i]:update(dt)
+      if cell.flying[i].t == 1 then
+        table.insert(cell.objs, table.remove(cell.flying, i))
+      end
+    end
+  end
+end
+
+function utils.drawCells()
+  for i, cell in ipairs(utils.orderedCells) do
+    for j, obj in ipairs(cell.objs) do
+      utils.drawQuad(obj.quad, utils.worldCoordinates(obj.x, obj.y))
+    end
+    for j, flying in ipairs(cell.flying) do
+      utils.drawQuad(flying.quad, utils.worldCoordinates(flying.x, flying.y))
+    end
+    for j, missed in ipairs(cell.missed) do
+      utils.drawQuad(missed.quad, utils.worldCoordinates(missed.x, missed.y))
+    end
+  end
+end
+
 function utils.cellAt(x, y)
-  x, y = utils.cellCoordinates(x, y)
+  local x, y = utils.cellCoordinates(x, y)
   if not utils.cells[x] then
-    if not utils.isWalkable(x, y) then return nil end
-    utils.cells[x] = {[y] = {x = x, y = y, objs = {}}}
-  elseif not utils.cells[x][y] then
-    if not utils.isWalkable(x, y) then return nil end
-    utils.cells[x][y] = {x = x, y = y, objs = {}}
+    utils.cells[x] = {}
+  end
+  if not utils.cells[x][y] then
+    utils.cells[x][y] = {x = x, y = y, walkable = utils.isWalkable(x, y), objs = {}, flying = {}, missed = {}}
+    table.insert(utils.orderedCells, utils.cells[x][y])
+    utils.sortCells()
   end
   return utils.cells[x][y]
 end
@@ -163,19 +205,19 @@ function utils.updateAgent(agent, dt)
       local candidates = {}
       local next
       next = utils.cellAt(utils.worldCoordinates(agent.x - 1, agent.y))
-      if next then
+      if next.walkable then
         table.insert(candidates, {cell = next, reverse = true})
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y - 1))
-      if next then
+      if next.walkable then
         table.insert(candidates, {cell = next, reverse = true})
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x + 1, agent.y))
-      if next then
+      if next.walkable then
         table.insert(candidates, {cell = next, reverse = false})
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y + 1))
-      if next then
+      if next.walkable then
         table.insert(candidates, {cell = next, reverse = false})
       end
       if #candidates > 0 then
