@@ -68,7 +68,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
   end
   for i, cell in ipairs(utils.orderedCells) do
     if cell.agent and not cell.agent.behind then
-      utils.drawAgent(cell.agent)
+      utils.drawAgent(cell.agent, gameState.stress)
     end
     if #cell.objs > 0 then
       if gameState.cell and gameState.cell.y < cell.y then
@@ -86,7 +86,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
       end
     end
     if cell.agent and cell.agent.behind then
-      utils.drawAgent(cell.agent)
+      utils.drawAgent(cell.agent, gameState.stress)
     end
     for j, flying in ipairs(cell.flying) do
       utils.drawQuad(flying.quad, utils.worldCoordinates(flying.x, flying.y))
@@ -152,7 +152,7 @@ function utils.initQuad(texture, x, y, width, height, ox, oy)
 end
 
 function utils.initAnimation(frames, speed, x, y, width, height, ox, oy)
-  local t = math.random()
+  local t = love.math.random()
   return {
     update = function (self, dt)
       t = (t + speed * dt) % 1
@@ -234,7 +234,7 @@ end
 function utils.updateAgent(agent, dt)
   agent.animations[agent.state]:update(dt)
   if agent.state == 'idle' then
-    if math.random() < .5 * dt then
+    if love.math.random() < .5 * dt then
       local candidates = {}
       local next
       next = utils.cellAt(utils.worldCoordinates(agent.x - 1, agent.y))
@@ -254,7 +254,7 @@ function utils.updateAgent(agent, dt)
         table.insert(candidates, {cell = next, reverse = false})
       end
       if #candidates > 0 then
-        next = candidates[math.random(1, #candidates)]
+        next = candidates[love.math.random(1, #candidates)]
         agent.from = agent.to
         agent.to.agent = nil
         agent.to = next.cell
@@ -265,7 +265,7 @@ function utils.updateAgent(agent, dt)
         agent.reverse = next.reverse
         agent.behind = agent.to.y < agent.from.y
       end
-    elseif math.random() < .1 * dt then
+    elseif love.math.random() < .1 * dt then
       agent.state = 'blink'
       agent.t = 0
     end
@@ -283,10 +283,12 @@ function utils.updateAgent(agent, dt)
   end
 end
 
-function utils.drawAgent(agent)
+function utils.drawAgent(agent, stress)
   local sx, sy = utils.worldCoordinates(agent.x, agent.y)
   utils.drawQuad(agent.animations[agent.state], sx, sy, agent.reverse)
-  utils.getColor()
+  if agent.stress > 0 then
+    utils.drawQuad(stress[agent.stress], sx, sy)
+  end
 end
 
 function utils.updatePlane(self, dt)

@@ -5,12 +5,27 @@ local utils = require 'utils'
 
 local background = utils.initImage('assets/sprites/full_scene_2.png')
 local cursor = utils.initImage('assets/sprites/cursor.png')
-local texture = love.graphics.newImage('assets/sprites/aim_system.png')
-local ruler = utils.initQuad(texture, 1, 1, 6, 46, nil, 43)
-local tick = utils.initQuad(texture, 10, 2, 4, 8, nil, 6)
-local goal = utils.initQuad(texture, 8, 12, 8, 8)
-local target = utils.initQuad(texture, 17, 17, 14, 14)
-local plane = utils.initQuad(texture, 20, 39, 9, 5)
+local textures = {
+  love.graphics.newImage('assets/sprites/aim_system1.png'),
+  love.graphics.newImage('assets/sprites/aim_system2.png'),
+  love.graphics.newImage('assets/sprites/aim_system3.png'),
+  love.graphics.newImage('assets/sprites/aim_system4.png'),
+  love.graphics.newImage('assets/sprites/aim_system5.png'),
+}
+local ruler = utils.initQuad(textures[1], 1, 1, 6, 46, nil, 43)
+local tick = utils.initQuad(textures[1], 10, 2, 4, 8, nil, 6)
+local goal = utils.initQuad(textures[1], 8, 12, 8, 8)
+local target = utils.initQuad(textures[1], 17, 17, 14, 14)
+local plane = utils.initQuad(textures[1], 20, 39, 9, 5)
+local stress = {
+  utils.initQuad(textures[1], 48, 0, 12, 5, nil, 33),
+  utils.initQuad(textures[1], 48, 4, 12, 5, nil, 33),
+  utils.initQuad(textures[1], 48, 8, 12, 5, nil, 33),
+  utils.initQuad(textures[1], 48, 12, 12, 5, nil, 33),
+  utils.initQuad(textures[1], 48, 16, 12, 5, nil, 33),
+  utils.initQuad(textures[1], 48, 20, 12, 5, nil, 33),
+  utils.initQuad(textures[1], 48, 24, 12, 5, nil, 33)
+}
 local bookTexture = love.graphics.newImage('assets/sprites/books_2.png')
 local test = utils.initQuad(bookTexture, 0, 64, 11, 7)
 local mags = {
@@ -30,50 +45,55 @@ local ivan = {
   x = 2,
   y = 11,
   state = 'idle',
-  reverse = math.random() < .5,
+  reverse = love.math.random() < .5,
   t = 0,
   path = nil,
-  animations = {}
+  animations = {},
+  stress = 0
 }
 
 local ackboo = {
   x = 6,
   y = 40,
   state = 'idle',
-  reverse = math.random() < .5,
+  reverse = love.math.random() < .5,
   t = 0,
   path = nil,
-  animations = {}
+  animations = {},
+  stress = love.math.random(0, 7)
 }
 
 local izual = {
   x = 9,
   y = 40,
   state = 'idle',
-  reverse = math.random() < .5,
+  reverse = love.math.random() < .5,
   t = 0,
   path = nil,
-  animations = {}
+  animations = {},
+  stress = love.math.random(0, 7)
 }
 
 local sebum = {
   x = 12,
   y = 40,
   state = 'idle',
-  reverse = math.random() < .5,
+  reverse = love.math.random() < .5,
   t = 0,
   path = nil,
-  animations = {}
+  animations = {},
+  stress = love.math.random(0, 7)
 }
 
 local ellen = {
   x = 15,
   y = 40,
   state = 'idle',
-  reverse = math.random() < .5,
+  reverse = love.math.random() < .5,
   t = 0,
   path = nil,
-  animations = {}
+  animations = {},
+  stress = love.math.random(0, 7)
 }
 
 ivan.to = utils.cellAt(utils.worldCoordinates(ivan.x, ivan.y))
@@ -194,6 +214,7 @@ local gameState = {
     {127, 116}, {129, 116}, {131, 116}, {133, 116}, {135, 116}, {137, 116}, {139, 116},
     {127, 118}, {129, 118}, {131, 118}, {133, 118}
   },
+  stress = stress, -- c'est n'importe quoi utils, gameState, les globals, ...
   updateCell = function(self, x, y)
     self.cell = utils.cellAt(x, y)
   end,
@@ -210,6 +231,12 @@ local gameState = {
                      self.day == 13 or  self.day == 14 or
                      self.day == 20 or self.day == 21 or
                      self.day == 27 or self.day == 28
+      if self.weekend then
+        ackboo.stress = math.max(0, ackboo.stress - 1)
+        izual.stress = math.max(0, izual.stress - 1)
+        sebum.stress = math.max(0, sebum.stress - 1)
+        ellen.stress = math.max(0, ellen.stress - 1)
+      end
     end
     if self.aiming then
       self.t = self.t + self.aimingSpeed * dt
@@ -229,7 +256,7 @@ local gameState = {
     self.aiming = true
     self.x, self.y = self.cell.x, self.cell.y
     self.aimingSpeed = 2 + .05 * self.cell.x
-    self.t = 2 * math.random()
+    self.t = 2 * love.math.random()
     self.t0 = self.t
   end,
   throw = function(self)
@@ -246,7 +273,7 @@ local gameState = {
     p.quad = plane
     p.h = 1
     p.update = utils.updatePlane
-    p.rand = math.random() - .25
+    p.rand = love.math.random() - .25
     local cell = utils.cellAt(utils.worldCoordinates(p.x2, p.y2))
     if cell.walkable then
       table.insert(cell.flying, p)
@@ -274,7 +301,7 @@ function love.draw()
   love.graphics.setColor(1, 1, 1)
   utils.drawImage(background, OX, OY)
   utils.drawCalendar(gameState)
-  utils.drawWalkingAreas()
+  -- utils.drawWalkingAreas()
   if gameState.cell then
     utils.drawImage(cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
     utils.drawQuad(ruler, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
