@@ -242,7 +242,7 @@ local gameState = {
     p.update = utils.updatePlane
     p.rand = love.math.random() - .25
     local cell = utils.cellAt(utils.worldCoordinates(p.x2, p.y2))
-    if cell.walkable and #cell.objs == 0 and #cell.flying == 0 then
+    if cell.walkable and cell:isEmpty() then
       table.insert(cell.flying, p)
     else
       p.exploding = false

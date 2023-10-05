@@ -116,13 +116,26 @@ function utils.drawCells(gameState) -- beurk beurk beurk
   end
 end
 
+function utils.cellIsEmpty(self)
+  return #self.objs + #self.agents + #self.flying == 0
+end
+
 function utils.cellAt(x, y)
   local x, y = utils.cellCoordinates(x, y)
   if not utils.cells[x] then
     utils.cells[x] = {}
   end
   if not utils.cells[x][y] then
-    utils.cells[x][y] = {x = x, y = y, walkable = utils.isWalkable(x, y), objs = {}, flying = {}, missed = {}, agents = {}}
+    utils.cells[x][y] = {
+      x = x,
+      y = y,
+      walkable = utils.isWalkable(x, y),
+      objs = {},
+      flying = {},
+      missed = {},
+      agents = {},
+      isEmpty = utils.cellIsEmpty
+    }
     table.insert(utils.orderedCells, utils.cells[x][y])
     utils.sortCells()
   end
@@ -319,19 +332,19 @@ function utils.updateAgent(agent, dt, gameState)
       local candidates = {}
       local next
       next = utils.cellAt(utils.worldCoordinates(agent.x - 1, agent.y))
-      if next.walkable and #next.agents == 0 and agent.from ~= next then
+      if next.walkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y - 1))
-      if next.walkable and #next.agents == 0 and agent.from ~= next then
+      if next.walkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x + 1, agent.y))
-      if next.walkable and #next.agents == 0 and agent.from ~= next then
+      if next.walkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y + 1))
-      if next.walkable and #next.agents == 0 and agent.from ~= next then
+      if next.walkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       if #candidates > 0 then
