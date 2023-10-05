@@ -12,7 +12,9 @@ local utils = {
     -- redac
     {x = 3, y = 36, w = 15, h = 5},
     {x = 2, y = 41, w = 17, h = 6},
-    {x = 1, y = 47, w = 19, h = 2}
+    {x = 1, y = 47, w = 19, h = 2},
+    -- door
+    {x = 13, y = 34, w = 1, h = 1}
   },
   r, g, b, a
 }
@@ -77,8 +79,10 @@ function utils.drawCells(gameState) -- beurk beurk beurk
       )
       utils.setColor()
     end
-    if cell.agent and not cell.agent.behind then
-      utils.drawAgent(cell.agent, gameState.stress)
+    for i, agent in ipairs(cell.agents) do
+      if agent.behind == false then
+        utils.drawAgent(agent, gameState.stress)
+      end
     end
     if #cell.objs > 0 then
       if gameState.cell and gameState.cell.y < cell.y then
@@ -95,8 +99,10 @@ function utils.drawCells(gameState) -- beurk beurk beurk
         utils.setColor()
       end
     end
-    if cell.agent and cell.agent.behind then
-      utils.drawAgent(cell.agent, gameState.stress)
+    for i, agent in ipairs(cell.agents) do
+      if agent.behind then
+        utils.drawAgent(agent, gameState.stress)
+      end
     end
     for j, flying in ipairs(cell.flying) do
       utils.drawQuad(flying.quad, utils.worldCoordinates(flying.x, flying.y))
@@ -116,7 +122,7 @@ function utils.cellAt(x, y)
     utils.cells[x] = {}
   end
   if not utils.cells[x][y] then
-    utils.cells[x][y] = {x = x, y = y, walkable = utils.isWalkable(x, y), objs = {}, flying = {}, missed = {}}
+    utils.cells[x][y] = {x = x, y = y, walkable = utils.isWalkable(x, y), objs = {}, flying = {}, missed = {}, agents = {}}
     table.insert(utils.orderedCells, utils.cells[x][y])
     utils.sortCells()
   end
@@ -140,15 +146,15 @@ function utils.cellCoordinates(x, y)
          math.floor((y + .5 * utils.ch * utils.ratio) / (utils.ch * utils.ratio))
 end
 
-function utils.initImage(filename)
+function utils.initImage(filename, ox, oy)
   local image = love.graphics.newImage(filename)
   local w, h = image:getDimensions()
   return {
     image = image,
     w = w, -- à supprimer si useless
     h = h, -- à supprimer si useless
-    ox = w / 2,
-    oy = h / 2
+    ox = ox or w / 2,
+    oy = oy or h / 2
   }
 end
 
@@ -197,6 +203,25 @@ function utils.copyAnimation(animation)
     oy = animation.oy,
     once = animation.once
   }
+end
+
+function utils.initAgent(x, y, stress)
+  local agent = {
+    x = x,
+    y = y,
+    state = 'idle',
+    reverse = love.math.random() < .5,
+    behind = false,
+    t = 0,
+    path = nil,
+    animations = {},
+    update = utils.updateAgent,
+    goTo = utils.goTo,
+    stress = stress or love.math.random(0, 7)
+  }
+  agent.to = utils.cellAt(utils.worldCoordinates(agent.x, agent.y))
+  table.insert(agent.to.agents, agent)
+  return agent
 end
 
 function utils.initText(font, str)
@@ -265,39 +290,53 @@ function utils.slice(tab, first, last)
   return slice
 end
 
-function utils.updateAgent(agent, dt)
+function utils.remove(tab, item)
+  for i = #tab, 1, -1 do
+    if tab[i] == item then
+      return table.remove(tab, i)
+    end
+  end
+end
+
+function utils.goTo(self, cell, ox, oy)
+  self.from = self.to
+  utils.remove(self.to.agents, self)
+  self.to = cell
+  table.insert(self.to.agents, self)
+  self.t = 0
+  self.path = utils.initPath(self.from.x, self.from.y, (self.to.x + (ox or 0)), (self.to.y + (oy or 0)))
+  self.reverse = (self.to.x + (ox or 0)) < self.from.x
+  self.behind = (self.to.y + (oy or 0)) < self.from.y
+end
+
+function utils.updateAgent(agent, dt, gameState)
   agent.animations[agent.state]:update(dt)
   if agent.state == 'idle' then
-    if love.math.random() < .5 * dt then
+    if agent.stress > 7 then
+      agent.state = 'leaving'
+      agent:goTo(utils.cellAt(utils.worldCoordinates(gameState.door.x, gameState.door.y)), gameState.door.ox)
+    elseif love.math.random() < .5 * dt then
       local candidates = {}
       local next
       next = utils.cellAt(utils.worldCoordinates(agent.x - 1, agent.y))
-      if next.walkable and not next.agent and agent.from ~= next then
-        table.insert(candidates, {cell = next, reverse = true})
+      if next.walkable and #next.agents == 0 and agent.from ~= next then
+        table.insert(candidates, next)
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y - 1))
-      if next.walkable and not next.agent and agent.from ~= next then
-        table.insert(candidates, {cell = next, reverse = true})
+      if next.walkable and #next.agents == 0 and agent.from ~= next then
+        table.insert(candidates, next)
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x + 1, agent.y))
-      if next.walkable and not next.agent and agent.from ~= next then
-        table.insert(candidates, {cell = next, reverse = false})
+      if next.walkable and #next.agents == 0 and agent.from ~= next then
+        table.insert(candidates, next)
       end
       next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y + 1))
-      if next.walkable and not next.agent and agent.from ~= next then
-        table.insert(candidates, {cell = next, reverse = false})
+      if next.walkable and #next.agents == 0 and agent.from ~= next then
+        table.insert(candidates, next)
       end
       if #candidates > 0 then
-        next = candidates[love.math.random(1, #candidates)]
-        agent.from = agent.to
-        agent.to.agent = nil
-        agent.to = next.cell
-        next.cell.agent = agent
         agent.state = 'walking'
-        agent.t = 0
-        agent.path = utils.initPath(agent.x, agent.y, next.cell.x, next.cell.y)
-        agent.reverse = next.reverse
-        agent.behind = agent.to.y < agent.from.y
+        agent:goTo(candidates[love.math.random(1, #candidates)])
       end
     elseif love.math.random() < .1 * dt then
       agent.state = 'blink'
@@ -309,6 +348,9 @@ function utils.updateAgent(agent, dt)
     if agent.t == 1 then
       agent.state = 'idle'
     end
+  elseif agent.state == 'leaving' then
+    agent.t = agent.path.update(agent.t, dt)
+    agent.x, agent.y = agent.path.at(agent.t)
   elseif agent.state == 'blink' then
     agent.t = agent.t + dt
     if agent.t > 1 then

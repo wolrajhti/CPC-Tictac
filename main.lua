@@ -5,6 +5,7 @@ local utils = require 'utils'
 
 local background = utils.initImage('assets/sprites/full_scene_2.png')
 local foreground = utils.initImage('assets/sprites/foreground.png')
+local door = utils.initImage('assets/sprites/door.png')
 local cursor = utils.initImage('assets/sprites/cursor.png')
 local textures = {
   love.graphics.newImage('assets/sprites/aim_system1.png'),
@@ -25,7 +26,8 @@ local stress = {
   utils.initQuad(textures[1], 48, 12, 12, 5, nil, 33),
   utils.initQuad(textures[1], 48, 16, 12, 5, nil, 33),
   utils.initQuad(textures[1], 48, 20, 12, 5, nil, 33),
-  utils.initQuad(textures[1], 48, 24, 12, 5, nil, 33)
+  utils.initQuad(textures[1], 48, 24, 12, 5, nil, 33),
+  utils.initQuad(textures[1], 48, 28, 12, 5, nil, 33)
 }
 local bookTexture = love.graphics.newImage('assets/sprites/books_2.png')
 local test = utils.initQuad(bookTexture, 0, 64, 11, 7)
@@ -42,71 +44,11 @@ local mags = {
   utils.initQuad(bookTexture, 100, 25, 11, 46, nil, 43)
 }
 
-local ivan = {
-  x = 2,
-  y = 11,
-  state = 'idle',
-  reverse = love.math.random() < .5,
-  t = 0,
-  path = nil,
-  animations = {},
-  stress = 0
-}
-
-local ackboo = {
-  x = 6,
-  y = 40,
-  state = 'idle',
-  reverse = love.math.random() < .5,
-  t = 0,
-  path = nil,
-  animations = {},
-  stress = love.math.random(0, 7)
-}
-
-local izual = {
-  x = 9,
-  y = 40,
-  state = 'idle',
-  reverse = love.math.random() < .5,
-  t = 0,
-  path = nil,
-  animations = {},
-  stress = love.math.random(0, 7)
-}
-
-local sebum = {
-  x = 12,
-  y = 40,
-  state = 'idle',
-  reverse = love.math.random() < .5,
-  t = 0,
-  path = nil,
-  animations = {},
-  stress = love.math.random(0, 7)
-}
-
-local ellen = {
-  x = 15,
-  y = 40,
-  state = 'idle',
-  reverse = love.math.random() < .5,
-  t = 0,
-  path = nil,
-  animations = {},
-  stress = love.math.random(0, 7)
-}
-
-ivan.to = utils.cellAt(utils.worldCoordinates(ivan.x, ivan.y))
-ackboo.to = utils.cellAt(utils.worldCoordinates(ackboo.x, ackboo.y))
-izual.to = utils.cellAt(utils.worldCoordinates(izual.x, izual.y))
-sebum.to = utils.cellAt(utils.worldCoordinates(sebum.x, sebum.y))
-ellen.to = utils.cellAt(utils.worldCoordinates(ellen.x, ellen.y))
-ivan.to.agent = ivan
-ackboo.to.agent = ackboo
-izual.to.agent = izual
-sebum.to.agent = sebum
-ellen.to.agent = ellen
+local ivan = utils.initAgent(2, 11, 0)
+local ackboo = utils.initAgent(6, 40)
+local izual = utils.initAgent(9, 40)
+local sebum = utils.initAgent(12, 40)
+local ellen = utils.initAgent(15, 40)
 
 local characters = {
   love.graphics.newImage('assets/sprites/cpc_assets1.png'),
@@ -143,6 +85,11 @@ ackboo.animations.walking = utils.initAnimation(walkingFrames, 2, 20, 2, 17, 29,
 izual.animations.walking = utils.initAnimation(walkingFrames, 2, 37, 2, 17, 29, nil, 28)
 sebum.animations.walking = utils.initAnimation(walkingFrames, 2, 53, 2, 18, 29, nil, 28)
 ellen.animations.walking = utils.initAnimation(walkingFrames, 2, 72, 2, 15, 29, nil, 28)
+ivan.animations.leaving = ivan.animations.walking
+ackboo.animations.leaving = ackboo.animations.walking
+izual.animations.leaving = izual.animations.walking
+sebum.animations.leaving = sebum.animations.walking
+ellen.animations.leaving = ellen.animations.walking
 local aimingFrames = utils.slice(characters, 13)
 ivan.animations.aiming = utils.initAnimation(aimingFrames, 2, 0, 0, 21, 31, nil, 28)
 
@@ -220,6 +167,10 @@ local gameState = {
     {127, 118}, {129, 118}, {131, 118}, {133, 118}
   },
   stress = stress, -- c'est n'importe quoi utils, gameState, les globals, ...
+  agents = {ivan, ackboo, izual, sebum, ellen},
+  door = {image = door, x = 13, y = 34, ox = .5},
+  OX = OX,
+  OY = OY,
   updateCell = function(self, x, y)
     self.cell = utils.cellAt(x, y)
   end,
@@ -237,10 +188,11 @@ local gameState = {
                      self.day == 20 or self.day == 21 or
                      self.day == 27 or self.day == 28
       if self.weekend then
-        ackboo.stress = math.max(0, ackboo.stress - 1)
-        izual.stress = math.max(0, izual.stress - 1)
-        sebum.stress = math.max(0, sebum.stress - 1)
-        ellen.stress = math.max(0, ellen.stress - 1)
+        for i, agent in ipairs(self.agents) do
+          if i ~= 1 then -- and agent.state ~= 'leaving' then -- ivan (bof bof ...)
+            agent.stress = math.min(math.max(0, agent.stress - 1), 8)
+          end
+        end
       end
     end
     if self.aiming then
@@ -254,6 +206,13 @@ local gameState = {
       self.y = self.cell.y + offset
       if self.t > self.t0 + 6 then
         self:throw()
+      end
+    end
+    for i = #self.agents, 1, -1 do
+      self.agents[i]:update(dt, self)
+      if self.agents[i].state == 'leaving' and self.agents[i].t == 1 then
+        utils.remove(self.agents[i].to.agents, self.agents[i])
+        table.remove(self.agents, i)
       end
     end
   end,
@@ -298,11 +257,6 @@ local gameState = {
 function love.update(dt)
   gameState:update(dt)
   utils.updateCells(dt)
-  utils.updateAgent(ivan, dt)
-  utils.updateAgent(ackboo, dt)
-  utils.updateAgent(izual, dt)
-  utils.updateAgent(sebum, dt)
-  utils.updateAgent(ellen, dt)
 end
 
 love.graphics.setLineStyle('rough')
@@ -311,6 +265,9 @@ love.graphics.setLineWidth(utils.ratio)
 function love.draw()
   love.graphics.setColor(1, 1, 1)
   utils.drawImage(background, OX, OY)
+  if #utils.cellAt(utils.worldCoordinates(gameState.door.x, gameState.door.y)).agents ~= 0 then
+    utils.drawImage(door, OX, OY)
+  end
   utils.drawCalendar(gameState)
   -- utils.drawWalkingAreas()
   if gameState.cell then
@@ -336,6 +293,10 @@ function love.draw()
   -- utils.drawText(texts.sebum.test[1], sx, sy)
   -- utils.drawText(texts.ellen.test[1], utils.worldCoordinates(15, 40))
   utils.drawImage(foreground, OX, OY)
+  utils.getColor()
+  love.graphics.setColor(0, 0, 0)
+  love.graphics.print(love.timer.getFPS(), 64, 64)
+  utils.setColor()
 end
 
 function love.mousemoved(x, y)
