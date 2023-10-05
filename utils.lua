@@ -67,6 +67,17 @@ function utils.drawCells(gameState) -- beurk beurk beurk
     utils.getColor()
   end
   for i, cell in ipairs(utils.orderedCells) do
+    if gameState.cell and gameState.cell.walkable and gameState.cell.y == cell.y then
+      love.graphics.setColor(.1, .1, .1, .2)
+      love.graphics.rectangle(
+        'fill',
+        (cell.x - .5) * utils.cw * utils.ratio,
+        (cell.y - .5) * utils.ch * utils.ratio,
+        utils.cw * utils.ratio,
+        utils.ch * utils.ratio
+      )
+      utils.setColor()
+    end
     if cell.agent and not cell.agent.behind then
       utils.drawAgent(cell.agent, gameState.stress)
     end

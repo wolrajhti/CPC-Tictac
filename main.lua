@@ -4,6 +4,7 @@ love.graphics.setDefaultFilter('nearest', 'nearest')
 local utils = require 'utils'
 
 local background = utils.initImage('assets/sprites/full_scene_2.png')
+local foreground = utils.initImage('assets/sprites/foreground.png')
 local cursor = utils.initImage('assets/sprites/cursor.png')
 local textures = {
   love.graphics.newImage('assets/sprites/aim_system1.png'),
@@ -142,6 +143,8 @@ ackboo.animations.walking = utils.initAnimation(walkingFrames, 2, 20, 2, 17, 29,
 izual.animations.walking = utils.initAnimation(walkingFrames, 2, 37, 2, 17, 29, nil, 28)
 sebum.animations.walking = utils.initAnimation(walkingFrames, 2, 53, 2, 18, 29, nil, 28)
 ellen.animations.walking = utils.initAnimation(walkingFrames, 2, 72, 2, 15, 29, nil, 28)
+local aimingFrames = utils.slice(characters, 13)
+ivan.animations.aiming = utils.initAnimation(aimingFrames, 2, 0, 0, 21, 31, nil, 28)
 
 local W, H = love.graphics.getDimensions()
 local OX, OY = W / 2, H / 2
@@ -195,8 +198,8 @@ local aiming = false
 
 local gameState = {
   AIMING_WINDOW = 6, -- temps laissé au joueur pour viser
-  PX1 = 0, PY1 = 24, -- départ des avions
-  FLYING_SPEED = 50, -- vitesse des avions
+  PX1 = -2, PY1 = 30, -- départ des avions
+  FLYING_SPEED = 10, -- vitesse des avions (variable ?)
   cell, -- case survolée
   aiming, -- bool
   aimingSpeed, -- vitesse de déplacement du viseur
@@ -254,12 +257,15 @@ local gameState = {
   end,
   aim = function(self)
     self.aiming = true
+    ivan.state = 'aiming'
+    ivan.reverse = false
     self.x, self.y = self.cell.x, self.cell.y
     self.aimingSpeed = 2 + .05 * self.cell.x
     self.t = 2 * love.math.random()
     self.t0 = self.t
   end,
   throw = function(self)
+    ivan.state = 'idle'
     local p = {
       x1 = self.PX1,
       y1 = self.PY1,
@@ -324,6 +330,7 @@ function love.draw()
   -- utils.drawText(texts.izual.test[1], utils.worldCoordinates(5, 40))
   -- utils.drawText(texts.sebum.test[1], sx, sy)
   -- utils.drawText(texts.ellen.test[1], utils.worldCoordinates(15, 40))
+  utils.drawImage(foreground, OX, OY)
 end
 
 function love.mousemoved(x, y)
