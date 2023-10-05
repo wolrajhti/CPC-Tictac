@@ -256,7 +256,7 @@ local gameState = {
 
 function love.update(dt)
   gameState:update(dt)
-  utils.updateCells(dt)
+  utils.updateCells(dt, gameState)
 end
 
 love.graphics.setLineStyle('rough')

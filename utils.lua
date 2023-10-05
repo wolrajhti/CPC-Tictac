@@ -46,12 +46,18 @@ function utils.sortCells()
   table.sort(utils.orderedCells, utils.cellComp)
 end
 
-function utils.updateCells(dt)
+function utils.updateCells(dt, gameState)
   for i, cell in ipairs(utils.orderedCells) do
     for i = #cell.flying, 1, -1 do
       cell.flying[i]:update(dt)
       if not cell.flying[i].update then
         table.insert(cell.objs, table.remove(cell.flying, i))
+        local nearest = utils.findNearest(gameState.agents, cell, 2)
+        if nearest then
+          print('nearest found')
+        else
+          print('........')
+        end
       end
     end
     for i = #cell.missed, 1, -1 do
@@ -437,6 +443,37 @@ function utils.drawCalendar(gameState)
   love.graphics.rectangle('fill', day[1] * utils.ratio, day[2] * utils.ratio, 1 * utils.ratio, 2 * utils.ratio)
   love.graphics.rectangle('fill', (day[1] + 1) * utils.ratio, (day[2] + 1) * utils.ratio, 1 * utils.ratio, 1 * utils.ratio)
   utils.setColor()
+end
+
+function utils.findNearest(agents, cell, maxDist)
+  local candidates = {}
+  local neighbor
+  local dist
+  local minDist = maxDist
+  for i = -1, 1 do
+    for j = -1, 1 do
+      if i ~= 0 or j ~= 0 then
+        neighbor = utils.cellAt(utils.worldCoordinates(cell.x + i, cell.y + j))
+        if neighbor.walkable and neighbor:isEmpty() then
+          for k, agent in ipairs(agents) do
+            if k ~= 1 then -- ivan ...
+              dist = math.sqrt((agent.x - neighbor.x)^2 + (agent.y - neighbor.y)^2)
+              if dist < minDist then
+                candidates = {agent}
+                minDist = dist
+              elseif dist == minDist then
+                table.insert(candidates, agent)
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  if #candidates ~= 0 then
+    return candidates[math.random(1, #candidates)]
+  end
 end
 
 return utils
