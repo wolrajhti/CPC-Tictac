@@ -46,17 +46,16 @@ end
 
 function utils.updateCells(dt)
   for i, cell in ipairs(utils.orderedCells) do
-    for i = #cell.missed, 1, -1 do
-      cell.missed[i]:update(dt)
-      if cell.missed[i].t == 1 then
-        -- todo draw explosion
-        table.remove(cell.missed, i)
-      end
-    end
     for i = #cell.flying, 1, -1 do
       cell.flying[i]:update(dt)
-      if cell.flying[i].t == 1 then
+      if not cell.flying[i].update then
         table.insert(cell.objs, table.remove(cell.flying, i))
+      end
+    end
+    for i = #cell.missed, 1, -1 do
+      cell.missed[i]:update(dt)
+      if not cell.missed[i].update then
+        table.remove(cell.missed, i)
       end
     end
   end
@@ -162,17 +161,41 @@ function utils.initQuad(texture, x, y, width, height, ox, oy)
   }
 end
 
-function utils.initAnimation(frames, speed, x, y, width, height, ox, oy)
-  local t = love.math.random()
+function utils.updateAnimation(self, dt)
+  self.t = (self.t + self.speed * dt) % 1
+  self.texture = self.frames[math.floor(#self.frames * self.t) + 1]
+end
+
+function utils.updateAnimationOnce(self, dt)
+  self.t = math.min(self.t + self.speed * dt, 1)
+  self.texture = self.frames[math.min(#self.frames, math.floor(#self.frames * self.t) + 1)]
+end
+
+function utils.initAnimation(frames, speed, x, y, width, height, ox, oy, once)
   return {
-    update = function (self, dt)
-      t = (t + speed * dt) % 1
-      self.texture = frames[math.floor(#frames * t) + 1]
-    end,
+    t = love.math.random(),
+    update = utils.ternary(once, utils.updateAnimationOnce, utils.updateAnimation),
+    speed = speed,
     texture = frames[1],
+    frames = frames,
     quad = love.graphics.newQuad(x, y, width, height, frames[1]:getDimensions()),
     ox = ox or width / 2,
-    oy = oy or height / 2
+    oy = oy or height / 2,
+    once = once
+  }
+end
+
+function utils.copyAnimation(animation)
+  return {
+    t = animation.t,
+    update = animation.update,
+    speed = animation.speed,
+    texture = animation.frames[1],
+    frames = animation.frames,
+    quad = animation.quad,
+    ox = animation.ox,
+    oy = animation.oy,
+    once = animation.once
   }
 end
 
@@ -303,11 +326,24 @@ function utils.drawAgent(agent, stress)
 end
 
 function utils.updatePlane(self, dt)
-  self.t = math.min(self.t + self.speed * dt / self.len, 1)
-  self.x = self.x1 + self.t * (self.x2 - self.x1)
-  self.y = self.y1 + self.t * (self.y2 - self.y1)
-  if self.t == 1 then
-    self.update = nil
+  if self.exploding == true then
+    if self.animations.exploding.t == 1 then
+      self.update = nil
+    else
+      self.animations.exploding:update(dt)
+    end
+  else
+    self.t = math.min(self.t + self.speed * dt / self.len, 1)
+    self.x = self.x1 + self.t * (self.x2 - self.x1)
+    self.y = self.y1 + self.t * (self.y2 - self.y1)
+    if self.t == 1 then
+      if self.exploding == false then
+        self.exploding = true
+        self.quad = self.animations.exploding
+      else
+        self.update = nil
+      end
+    end
   end
 end
 

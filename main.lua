@@ -17,7 +17,7 @@ local ruler = utils.initQuad(textures[1], 1, 1, 6, 46, nil, 43)
 local tick = utils.initQuad(textures[1], 10, 2, 4, 8, nil, 6)
 local goal = utils.initQuad(textures[1], 8, 12, 8, 8)
 local target = utils.initQuad(textures[1], 17, 17, 14, 14)
-local plane = utils.initQuad(textures[1], 20, 39, 9, 5)
+local plane = utils.initQuad(textures[1], 19, 38, 11, 7, nil, 5)
 local stress = {
   utils.initQuad(textures[1], 48, 0, 12, 5, nil, 33),
   utils.initQuad(textures[1], 48, 4, 12, 5, nil, 33),
@@ -146,6 +146,8 @@ ellen.animations.walking = utils.initAnimation(walkingFrames, 2, 72, 2, 15, 29, 
 local aimingFrames = utils.slice(characters, 13)
 ivan.animations.aiming = utils.initAnimation(aimingFrames, 2, 0, 0, 21, 31, nil, 28)
 
+exploding = utils.initAnimation(textures, 3, 16, 32, 16, 14, 9, 11, true)
+
 local W, H = love.graphics.getDimensions()
 local OX, OY = W / 2, H / 2
 
@@ -199,7 +201,7 @@ local aiming = false
 local gameState = {
   AIMING_WINDOW = 6, -- temps laissé au joueur pour viser
   PX1 = -2, PY1 = 30, -- départ des avions
-  FLYING_SPEED = 10, -- vitesse des avions (variable ?)
+  FLYING_SPEED = 30, -- vitesse des avions (variable ?)
   cell, -- case survolée
   aiming, -- bool
   aimingSpeed, -- vitesse de déplacement du viseur
@@ -281,9 +283,12 @@ local gameState = {
     p.update = utils.updatePlane
     p.rand = love.math.random() - .25
     local cell = utils.cellAt(utils.worldCoordinates(p.x2, p.y2))
-    if cell.walkable then
+    if cell.walkable and #cell.objs == 0 and #cell.flying == 0 then
       table.insert(cell.flying, p)
     else
+      p.exploding = false
+      p.animations = {exploding = utils.copyAnimation(exploding)}
+      p.animations.exploding.t = 0
       table.insert(cell.missed, p)
     end
     self.aiming = false
