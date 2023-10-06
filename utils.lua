@@ -19,6 +19,16 @@ local utils = {
   r, g, b, a
 }
 
+function utils.initCells()
+  for i, wa in ipairs(walkableAreas) do
+    for x = 1, wa.w do
+      for y = 1, wa.h do
+        utils.cellAt(x, y)
+      end
+    end
+  end
+end
+
 local r, g, b, a
 function utils.getColor()
   r, g, b, a = love.graphics.getColor()
@@ -46,19 +56,26 @@ function utils.sortCells()
   table.sort(utils.orderedCells, utils.cellComp)
 end
 
+function utils.alert(cell, agents)
+  nearest = utils.findNearest(gameState.agents, cell)
+  if nearest then
+    nearest.agent.state = 'goingToWork'
+    nearest.agent.target = cell
+    cell.waitingFor = nearest.agent
+    nearest.agent:goTo(nearest.neighbor)
+  end
+end
+
 function utils.updateCells(dt, gameState)
+  local candidates = {}
+  local nearest
   for i, cell in ipairs(utils.orderedCells) do
     for i = #cell.flying, 1, -1 do
       cell.flying[i]:update(dt)
       if not cell.flying[i].update then
         table.insert(cell.objs, table.remove(cell.flying, i))
-        local nearest = utils.findNearest(gameState.agents, cell, 4)
-        if nearest then
-          nearest.agent.state = 'goingToWork'
-          nearest.agent.target = cell
-          cell.waitingFor = nearest.agent
-          nearest.agent:goTo(nearest.neighbor)
-        end
+        cell.waitingFor = false
+        utils.alert(cell, gameState.agents)
       end
     end
     for i = #cell.missed, 1, -1 do
@@ -67,6 +84,13 @@ function utils.updateCells(dt, gameState)
         table.remove(cell.missed, i)
       end
     end
+    if cell.waitingFor == false then
+      table.insert(candidates, cell)
+    end
+  end
+
+  if #candidates ~= 0 then
+    utils.alert(candidates[math.random(1, #candidates)], gameState.agents)
   end
 end
 
@@ -146,12 +170,27 @@ function utils.cellAt(x, y)
   return utils.cells[x][y]
 end
 
-function utils.targetHeight(cell)
+function utils.targetHeight(cell) -- TODO method
   local h = 0
   for i, v in ipairs(cell.objs) do
     h = h + v.h
   end
   return h
+end
+
+function utils.heightThreshold(cell)
+  local min, max = 0, 10
+  for i, neighbor in ipairs(utils.cells[y]) do
+    if neighbor.x <= cell.x then
+      min = math.max(min, utils.targetHeight(neighbor) + neighbor.x - cell.x)
+    else
+      max = math.min(max, neighbor.x - cell.x - 1)
+      if neighbor.walkable == false then
+        return min, max
+      end
+    end
+  end
+  return min, max
 end
 
 function utils.worldCoordinates(x, y)
@@ -398,7 +437,7 @@ function utils.updateAgent(agent, dt, gameState)
   elseif agent.state == 'work' then
     local objs = agent.target.objs
     table.remove(objs, #objs) -- on retire le dernier objet (un avion)
-    table.insert(objs, {quad = gameState.article, h = 1})
+    table.insert(objs, {quad = gameState.article, h = 0})
     agent.target.waitingFor = nil
     agent.target = nil
     agent.stress = math.min(agent.stress + 1, 8)
@@ -473,25 +512,26 @@ function utils.drawCalendar(gameState)
   utils.setColor()
 end
 
-function utils.findNearest(agents, cell, maxDist)
+local N = {-1, -1, 0, -1, 1, -1, 1, 0, 1, 1, 0, 1, -1, 1, -1, 0}
+local MAX_DIST = 4 * math.sqrt(2) -- à régler
+function utils.findNearest(agents, cell)
   local candidates = {}
   local neighbor
   local dist
-  local minDist = maxDist
-  for i = -1, 1 do
-    for j = -1, 1 do
-      if i ~= 0 or j ~= 0 then
-        neighbor = utils.cellAt(cell.x + i, cell.y + j)
-        if neighbor.walkable and neighbor:isEmpty() then
-          for k, agent in ipairs(agents) do
-            if k ~= 1 and agent.state == 'idle' then -- ivan ...
-              dist = utils.len(agent.x, agent.y, neighbor.x, neighbor.y)
-              if dist < minDist then
-                candidates = {{agent = agent, neighbor = neighbor}}
-                minDist = dist
-              elseif dist == minDist then
-                table.insert(candidates, {agent = agent, neighbor = neighbor})
-              end
+  local minDist = MAX_DIST
+  for i, agent in ipairs(agents) do
+    if agent.state == 'idle' then -- l'agent est libre
+      minDist = utils.len(agent.x, agent.y, cell.x, cell.y)
+      if minDist < MAX_DIST then -- et n'est pas trop loin
+        for k = 1, #N, 2 do -- pour chaque case voisine
+          neighbor = utils.cellAt(cell.x + N[k], cell.y + N[k + 1])
+          if neighbor.walkable and neighbor:isEmpty() then -- si disponible
+            dist = utils.len(agent.x, agent.y, neighbor.x, neighbor.y)
+            if dist < minDist then
+              candidates = {{agent = agent, neighbor = neighbor}}
+              minDist = dist
+            elseif dist == minDist then
+              table.insert(candidates, {agent = agent, neighbor = neighbor})
             end
           end
         end

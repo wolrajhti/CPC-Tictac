@@ -249,7 +249,7 @@ local gameState = {
     p.x, p.y = p.x1, p.y1
     p.t = 0
     p.quad = plane
-    p.h = 1
+    p.h = 0
     p.update = utils.updatePlane
     local cell = utils.cellAt(p.x2, p.y2)
     if cell.walkable and cell:isEmpty() then
