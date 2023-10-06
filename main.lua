@@ -234,7 +234,7 @@ local gameState = {
       x2 = self.x + self.cell.y - utils.targetHeight(self.cell) - utils.round(self.y),
       y2 = self.cell.y
     }
-    p.len = math.sqrt((p.x2 - p.x1)^2 + (p.y2 - p.y1)^2)
+    p.len = utils.len(p.x1, p.y1, p.x2, p.y2)
     p.x, p.y = p.x1, p.y1
     p.t = 0
     p.quad = plane

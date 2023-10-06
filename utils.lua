@@ -185,20 +185,20 @@ function utils.initQuad(texture, x, y, width, height, ox, oy)
   }
 end
 
-function utils.updateAnimation(self, dt)
-  self.t = (self.t + self.speed * dt) % 1
+function utils.updateAnimationLoop(self, dt)
+  self.t = utils.updateTimeLoop(self.t, self.speed, dt)
   self.texture = self.frames[math.floor(#self.frames * self.t) + 1]
 end
 
-function utils.updateAnimationOnce(self, dt)
-  self.t = math.min(self.t + self.speed * dt, 1)
+function utils.updateAnimation(self, dt)
+  self.t = utils.updateTime(self.t, self.speed, dt)
   self.texture = self.frames[math.min(#self.frames, math.floor(#self.frames * self.t) + 1)]
 end
 
 function utils.initAnimation(frames, speed, x, y, width, height, ox, oy, once)
   return {
     t = love.math.random(),
-    update = utils.ternary(once, utils.updateAnimationOnce, utils.updateAnimation),
+    update = utils.ternary(once, utils.updateAnimation, utils.updateAnimationLoop),
     speed = speed,
     texture = frames[1],
     frames = frames,
@@ -252,14 +252,30 @@ function utils.initText(font, str)
   }
 end
 
+function utils.updateTime(t, speed, dt)
+  return math.min(t + speed * dt, 1)
+end
+
+function utils.updateTimeLoop(t, speed, dt)
+  return (t + speed * dt) % 1
+end
+
+function utils.linearInterpolation(x1, x2, t)
+  return x1 + t * (x2 - x1)
+end
+
+function utils.len(x1, y1, x2, y2)
+  return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
+end
+
 function utils.initPath(x1, y1, x2, y2)
-  local len = math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
+  local len = utils.len(x1, y1, x2, y2)
   return {
     update = function(t, dt)
-      return math.min(t + (3 / len) * dt, 1)
+      return utils.updateTime(t, 3 / len, dt)
     end,
     at = function(t)
-      return x1 + t * (x2 - x1), y1 + t * (y2 - y1)
+      return utils.linearInterpolation(x1, x2, t), utils.linearInterpolation(y1, y2, t)
     end
   }
 end
@@ -332,7 +348,7 @@ function utils.updateAgent(agent, dt, gameState)
   if agent.state == 'idle' then
     if agent.stress > 7 then
       agent.state = 'leaving'
-      agent:goTo(gameState.door.cell.x, gameState.door.cell.y, gameState.door.ox)
+      agent:goTo(gameState.door.cell, gameState.door.ox)
     elseif love.math.random() < .5 * dt then
       local candidates = {}
       local next
@@ -393,9 +409,9 @@ function utils.updatePlane(self, dt)
       self.animations.exploding:update(dt)
     end
   else
-    self.t = math.min(self.t + self.speed * dt / self.len, 1)
-    self.x = self.x1 + self.t * (self.x2 - self.x1)
-    self.y = self.y1 + self.t * (self.y2 - self.y1)
+    self.t = utils.updateTime(self.t, self.speed / self.len, dt)
+    self.x = utils.linearInterpolation(self.x1, self.x2, self.t)
+    self.y = utils.linearInterpolation(self.y1, self.y2, self.t)
     if self.t == 1 then
       if self.exploding == false then
         self.exploding = true
@@ -455,8 +471,8 @@ function utils.findNearest(agents, cell, maxDist)
         neighbor = utils.cellAt(cell.x + i, cell.y + j)
         if neighbor.walkable and neighbor:isEmpty() then
           for k, agent in ipairs(agents) do
-            if k ~= 1 then -- ivan ...
-              dist = math.sqrt((agent.x - neighbor.x)^2 + (agent.y - neighbor.y)^2)
+            if k ~= 1 and agent.state == 'idle' then -- ivan ...
+              dist = utils.len(agent.x, agent.y, neighbor.x, neighbor.y)
               if dist < minDist then
                 candidates = {agent}
                 minDist = dist
