@@ -52,11 +52,12 @@ function utils.updateCells(dt, gameState)
       cell.flying[i]:update(dt)
       if not cell.flying[i].update then
         table.insert(cell.objs, table.remove(cell.flying, i))
-        local nearest = utils.findNearest(gameState.agents, cell, 2)
+        local nearest = utils.findNearest(gameState.agents, cell, 4)
         if nearest then
-          print('nearest found')
-        else
-          print('........')
+          nearest.agent.state = 'goingToWork'
+          nearest.agent.target = cell
+          cell.waitingFor = nearest.agent
+          nearest.agent:goTo(nearest.neighbor)
         end
       end
     end
@@ -388,6 +389,20 @@ function utils.updateAgent(agent, dt, gameState)
     if agent.t > 1 then
       agent.state = 'idle'
     end
+  elseif agent.state == 'goingToWork' then -- faire un 'nextState' ou 'todoList'
+    agent.t = agent.path.update(agent.t, dt)
+    agent.x, agent.y = agent.path.at(agent.t)
+    if agent.t == 1 then
+      agent.state = 'work'
+    end
+  elseif agent.state == 'work' then
+    local objs = agent.target.objs
+    table.remove(objs, #objs) -- on retire le dernier objet (un avion)
+    table.insert(objs, {quad = gameState.article, h = 1})
+    agent.target.waitingFor = nil
+    agent.target = nil
+    agent.stress = math.min(agent.stress + 1, 8)
+    agent.state = 'idle'
   end
 end
 
@@ -472,10 +487,10 @@ function utils.findNearest(agents, cell, maxDist)
             if k ~= 1 and agent.state == 'idle' then -- ivan ...
               dist = utils.len(agent.x, agent.y, neighbor.x, neighbor.y)
               if dist < minDist then
-                candidates = {agent}
+                candidates = {{agent = agent, neighbor = neighbor}}
                 minDist = dist
               elseif dist == minDist then
-                table.insert(candidates, agent)
+                table.insert(candidates, {agent = agent, neighbor = neighbor})
               end
             end
           end

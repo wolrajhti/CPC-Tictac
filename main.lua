@@ -30,7 +30,7 @@ local stress = {
   utils.initQuad(textures[1], 48, 28, 12, 5, nil, 33)
 }
 local bookTexture = love.graphics.newImage('assets/sprites/books_2.png')
-local test = utils.initQuad(bookTexture, 0, 64, 11, 7)
+local article = utils.initQuad(bookTexture, 0, 64, 11, 7)
 local mags = {
   utils.initQuad(bookTexture, 10, 61, 11, 10, nil, 7),
   utils.initQuad(bookTexture, 20, 57, 11, 14, nil, 11),
@@ -90,6 +90,16 @@ ackboo.animations.leaving = ackboo.animations.walking
 izual.animations.leaving = izual.animations.walking
 sebum.animations.leaving = sebum.animations.walking
 ellen.animations.leaving = ellen.animations.walking
+ivan.animations.goingToWork = ivan.animations.walking
+ackboo.animations.goingToWork = ackboo.animations.walking
+izual.animations.goingToWork = izual.animations.walking
+sebum.animations.goingToWork = sebum.animations.walking
+ellen.animations.goingToWork = ellen.animations.walking
+ivan.animations.work = ivan.animations.walking
+ackboo.animations.work = ackboo.animations.walking
+izual.animations.work = izual.animations.walking
+sebum.animations.work = sebum.animations.walking
+ellen.animations.work = ellen.animations.walking
 local aimingFrames = utils.slice(characters, 13)
 ivan.animations.aiming = utils.initAnimation(aimingFrames, 2, 0, 0, 21, 31, nil, 28)
 
@@ -146,6 +156,7 @@ local cell
 local aiming = false
 
 local gameState = {
+  article = article,
   AIMING_WINDOW = 6, -- temps laissé au joueur pour viser
   PX1 = -2, PY1 = 30, -- départ des avions
   FLYING_SPEED = 30, -- vitesse des avions (variable ?)
