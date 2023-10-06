@@ -168,11 +168,11 @@ local gameState = {
   },
   stress = stress, -- c'est n'importe quoi utils, gameState, les globals, ...
   agents = {ivan, ackboo, izual, sebum, ellen},
-  door = {image = door, x = 13, y = 34, ox = .5},
+  door = {image = door, cell = utils.cellAt(13, 34), ox = .5},
   OX = OX,
   OY = OY,
   updateCell = function(self, x, y)
-    self.cell = utils.cellAt(x, y)
+    self.cell = utils.cellAt(utils.cellCoordinates(x, y))
   end,
   update = function(self, dt)
     self.time = self.time + self.TIME_SPEED * dt
@@ -241,7 +241,7 @@ local gameState = {
     p.h = 1
     p.update = utils.updatePlane
     p.rand = love.math.random() - .25
-    local cell = utils.cellAt(utils.worldCoordinates(p.x2, p.y2))
+    local cell = utils.cellAt(p.x2, p.y2)
     if cell.walkable and cell:isEmpty() then
       table.insert(cell.flying, p)
     else
@@ -265,7 +265,7 @@ love.graphics.setLineWidth(utils.ratio)
 function love.draw()
   love.graphics.setColor(1, 1, 1)
   utils.drawImage(background, OX, OY)
-  if #utils.cellAt(utils.worldCoordinates(gameState.door.x, gameState.door.y)).agents ~= 0 then
+  if #gameState.door.cell.agents ~= 0 then
     utils.drawImage(door, OX, OY)
   end
   utils.drawCalendar(gameState)

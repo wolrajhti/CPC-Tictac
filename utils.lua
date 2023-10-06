@@ -127,7 +127,6 @@ function utils.cellIsEmpty(self)
 end
 
 function utils.cellAt(x, y)
-  local x, y = utils.cellCoordinates(x, y)
   if not utils.cells[x] then
     utils.cells[x] = {}
   end
@@ -238,7 +237,7 @@ function utils.initAgent(x, y, stress)
     goTo = utils.goTo,
     stress = stress or love.math.random(0, 7)
   }
-  agent.to = utils.cellAt(utils.worldCoordinates(agent.x, agent.y))
+  agent.to = utils.cellAt(agent.x, agent.y)
   table.insert(agent.to.agents, agent)
   return agent
 end
@@ -333,23 +332,23 @@ function utils.updateAgent(agent, dt, gameState)
   if agent.state == 'idle' then
     if agent.stress > 7 then
       agent.state = 'leaving'
-      agent:goTo(utils.cellAt(utils.worldCoordinates(gameState.door.x, gameState.door.y)), gameState.door.ox)
+      agent:goTo(gameState.door.cell.x, gameState.door.cell.y, gameState.door.ox)
     elseif love.math.random() < .5 * dt then
       local candidates = {}
       local next
-      next = utils.cellAt(utils.worldCoordinates(agent.x - 1, agent.y))
+      next = utils.cellAt(agent.x - 1, agent.y)
       if next.walkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
-      next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y - 1))
+      next = utils.cellAt(agent.x, agent.y - 1)
       if next.walkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
-      next = utils.cellAt(utils.worldCoordinates(agent.x + 1, agent.y))
+      next = utils.cellAt(agent.x + 1, agent.y)
       if next.walkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
-      next = utils.cellAt(utils.worldCoordinates(agent.x, agent.y + 1))
+      next = utils.cellAt(agent.x, agent.y + 1)
       if next.walkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
@@ -453,7 +452,7 @@ function utils.findNearest(agents, cell, maxDist)
   for i = -1, 1 do
     for j = -1, 1 do
       if i ~= 0 or j ~= 0 then
-        neighbor = utils.cellAt(utils.worldCoordinates(cell.x + i, cell.y + j))
+        neighbor = utils.cellAt(cell.x + i, cell.y + j)
         if neighbor.walkable and neighbor:isEmpty() then
           for k, agent in ipairs(agents) do
             if k ~= 1 then -- ivan ...
