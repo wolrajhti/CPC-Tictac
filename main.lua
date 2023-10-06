@@ -240,7 +240,6 @@ local gameState = {
     p.quad = plane
     p.h = 1
     p.update = utils.updatePlane
-    p.rand = love.math.random() - .25
     local cell = utils.cellAt(p.x2, p.y2)
     if cell.walkable and cell:isEmpty() then
       table.insert(cell.flying, p)

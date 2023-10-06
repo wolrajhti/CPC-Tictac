@@ -95,11 +95,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
         love.graphics.setColor(r, g, b, .2)
       end
       for j, obj in ipairs(cell.objs) do
-        if obj.rand then
-          utils.drawQuad(obj.quad, utils.worldCoordinates(obj.x + obj.rand, obj.y)) -- bonne idée !
-        else
-          utils.drawQuad(obj.quad, utils.worldCoordinates(obj.x, obj.y))
-        end
+        utils.drawQuad(obj.quad, utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy)) -- à ne pas faire à chaque fois
       end
       if gameState.cell and gameState.cell.y < cell.y then
         utils.setColor()
@@ -139,6 +135,8 @@ function utils.cellAt(x, y)
       flying = {},
       missed = {},
       agents = {},
+      ox = love.math.random() - .25,
+      oy = love.math.random() - .25,
       isEmpty = utils.cellIsEmpty
     }
     table.insert(utils.orderedCells, utils.cells[x][y])
