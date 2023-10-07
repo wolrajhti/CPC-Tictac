@@ -61,7 +61,7 @@ function utils.alert(cell, agents)
   if nearest then
     nearest.agent.state = 'goingToWork'
     nearest.agent.target = cell
-    cell.waitingFor = nearest.agent
+    cell.waitingFor = nearest.agent -- le rédacteur va vers la cellule
     nearest.agent:goTo(nearest.neighbor)
   end
 end
@@ -74,7 +74,7 @@ function utils.updateCells(dt, gameState)
       cell.flying[i]:update(dt)
       if not cell.flying[i].update then
         table.insert(cell.objs, table.remove(cell.flying, i))
-        cell.waitingFor = false
+        cell.waitingFor = false -- en attente d'un rédacteur
         utils.alert(cell, gameState.agents)
       end
     end
@@ -116,7 +116,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
       end
     end
     if #cell.objs > 0 or cell.h ~= 0 then
-      if gameState.cell and gameState.cell.y < cell.y then
+      if gameState.cell and gameState.cell.walkable and gameState.cell.y < cell.y then
         love.graphics.setColor(r, g, b, .2)
       end
       if cell.h ~= 0 and cell.walkable then
@@ -278,7 +278,7 @@ function utils.initAgent(x, y, stress)
     animations = {},
     update = utils.updateAgent,
     goTo = utils.goTo,
-    stress = stress or love.math.random(0, 7)
+    stress = 0--stress or love.math.random(0, 7)
   }
   agent.to = utils.cellAt(agent.x, agent.y)
   table.insert(agent.to.agents, agent)
@@ -442,8 +442,8 @@ function utils.updateAgent(agent, dt, gameState)
   elseif agent.state == 'work' then
     local objs = agent.target.objs
     table.remove(objs, #objs) -- on retire le dernier objet (un avion)
-    table.insert(objs, {quad = gameState.article, h = 0})
-    agent.target.waitingFor = nil
+    table.insert(objs, {quad = gameState.article})
+    agent.target.waitingFor = nil -- le rédacteur a ramasser l'avion
     agent.target = nil
     agent.stress = math.min(agent.stress + 1, 8)
     agent.state = 'idle'
@@ -518,7 +518,7 @@ function utils.drawCalendar(gameState)
 end
 
 local N = {-1, -1, 0, -1, 1, -1, 1, 0, 1, 1, 0, 1, -1, 1, -1, 0}
-local MAX_DIST = 4 * math.sqrt(2) -- à régler
+local MAX_DIST = 2 * math.sqrt(2) -- à régler
 function utils.findNearest(agents, cell)
   local candidates = {}
   local neighbor
