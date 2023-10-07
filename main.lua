@@ -338,14 +338,15 @@ function love.draw()
   -- utils.drawText(texts.ellen.test[1], utils.worldCoordinates(15, 40))
   utils.drawImage(foreground, OX, OY)
   utils.getColor()
-  love.graphics.setColor(0, 0, 0)
+  -- love.graphics.setColor(0, 0, 0)
   love.graphics.print(love.timer.getFPS(), 64, 64)
+  love.graphics.print('money = '.. gameState.money, 128, 64)
   -- love.graphics.print(gameState.y, 64, 84)
-  -- local i = 0
-  -- for k, v in pairs(gameState.aimingObs) do
-  --   love.graphics.print(k..'='..utils.ternary(v, 'true', 'false'), 256, 32 + i * 20)
-  --   i = i + 1
-  -- end
+  local i = 0
+  for k, v in pairs(gameState.aimingObs) do
+    love.graphics.print(k..'='..utils.ternary(v, 'true', 'false'), 256, 32 + i * 20)
+    i = i + 1
+  end
   -- love.graphics.print(gameState.DEBUG_T, 400, 64)
   utils.setColor()
   -- utils.drawWalkingAreas()
@@ -369,23 +370,29 @@ function love.mousereleased(x, y, button)
   end
 end
 
--- function love.keypressed(key)
---   if key == '0' then
---     gameState.DEBUG_T = 0
---   elseif key == '1' then
---     gameState.DEBUG_T = 0.1
---   elseif key == '2' then
---     gameState.DEBUG_T = 0.2
---   elseif key == '3' then
---     gameState.DEBUG_T = 0.3
---   elseif key == '4' then
---     gameState.DEBUG_T = 0.4
---   elseif key == '5' then
---     gameState.DEBUG_T = 0.5
---   elseif key == '6' then
---     gameState.DEBUG_T = 0.6
---   end
--- end
+function love.keypressed(key)
+  if key == '0' then
+    gameState.DEBUG_T = 0
+  elseif key == '1' then
+    gameState.DEBUG_T = 0.1
+  elseif key == '2' then
+    gameState.DEBUG_T = 0.2
+  elseif key == '3' then
+    gameState.DEBUG_T = 0.3
+  elseif key == '4' then
+    gameState.DEBUG_T = 0.4
+  elseif key == '5' then
+    gameState.DEBUG_T = 0.5
+  elseif key == '6' then
+    gameState.DEBUG_T = 0.6
+  elseif key == '7' then
+    gameState.DEBUG_T = 0.7
+  elseif key == '8' then
+    gameState.DEBUG_T = 0.8
+  elseif key == '9' then
+    gameState.DEBUG_T = 0.9
+  end
+end
 
 -- function love.resize(w, h)
 --   W, H = w, h
