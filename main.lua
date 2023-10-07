@@ -157,6 +157,9 @@ local cell
 local aiming = false
 
 local gameState = {
+  money = 10,
+  magCount = 0,
+  articleCount = 0,
   DEBUG_T = 0,
   article = article,
   mags = mags,
@@ -199,10 +202,10 @@ local gameState = {
         self.day = self.day - 30
       end
       self.endOfTheMonth = self.day == 30
-      self.weekend = self.day == 6 or self.day == 7 or
-                     self.day == 13 or  self.day == 14 or
-                     self.day == 20 or self.day == 21 or
-                     self.day == 27 or self.day == 28
+      self.weekend = self.day == 6 or-- self.day == 7 or
+                     self.day == 13 or-- self.day == 14 or
+                     self.day == 20 or-- self.day == 21 or
+                     self.day == 27-- or self.day == 28
       if self.weekend then
         for i, agent in ipairs(self.agents) do
           if i ~= 1 and agent.state ~= 'leaving' then -- ivan (bof bof ...)
@@ -213,10 +216,13 @@ local gameState = {
       -- if self.endOfTheMonth then
         local needsUpdate = false
         for i, cell in ipairs(utils.orderedCells) do
-          if cell.walkable and cell.waitingFor == nil and #cell.objs ~= 0 then -- s'il y a un objet et que waitingFor est nil => c'est un article !
+          if cell.walkable and #cell.objs ~= 0 then
             needsUpdate = needsUpdate or self.cell and cell.y == self.cell.y
             table.remove(cell.objs, #cell.objs)
-            cell.h = math.min(cell.h + 1, 5)
+            if cell.waitingFor == nil then -- s'il y a un objet et que waitingFor est nil => c'est un article !
+              cell.h = math.min(cell.h + 1, 10)
+              self.money = self.money + 2
+            end
           end
         end
         if needsUpdate then
@@ -225,7 +231,7 @@ local gameState = {
       end
     end
     if self.aiming then
-      self.t = self.t + self.aimingSpeed * dt -- self.DEBUG_T
+      self.t = self.DEBUG_T or (self.t + self.aimingSpeed * dt)
       local u, offset = self.t % 2, 0
       if u > 1 then
         offset = -10 * (2 - u)
@@ -247,13 +253,15 @@ local gameState = {
     end
   end,
   aim = function(self)
-    self.aiming = true
-    ivan.state = 'aiming'
-    ivan.reverse = false
-    self.x, self.y = self.cell.x, self.cell.y
-    self.aimingSpeed = 2 -- + .05 * self.cell.x pas besoin de faire du variable
-    self.t = 2 * love.math.random()
-    self.t0 = self.t
+    if self.cell.walkable then
+      self.aiming = true
+      ivan.state = 'aiming'
+      ivan.reverse = false
+      self.x, self.y = self.cell.x, self.cell.y
+      self.aimingSpeed = 2 -- + .05 * self.cell.x pas besoin de faire du variable
+      self.t = 2 * love.math.random()
+      self.t0 = self.t
+    end
   end,
   throw = function(self)
     ivan.state = 'idle'
@@ -264,28 +272,21 @@ local gameState = {
       y1 = self.PY1,
       speed = self.FLYING_SPEED,
     }
-    if self.aimingObs[h] then
-      -- print('OBS', self.aimingObs[h].cell.x .. ', ' .. self.aimingObs[h].cell.y, 'DEBUG-T = ' ..self.DEBUG_T)
-      p.x2 = self.aimingObs[h].cell.x + self.aimingObs[h].cell.ox
-      p.y2 = self.cell.y - self.aimingObs[h].h + self.aimingObs[h].cell.oy
+    -- il faut rappeler heightThreshold pour être sur d'avoir la donnée à jour
+    -- print('OBS', self.aimingObs[h].cell.x .. ', ' .. self.aimingObs[h].cell.y, 'DEBUG-T = ' ..self.DEBUG_T)
+    p.x2 = self.aimingObs[h].cell.x + self.aimingObs[h].cell.ox
+    p.y2 = self.cell.y - self.aimingObs[h].h + self.aimingObs[h].cell.oy
+    if self.aimingObs[h].onTop then
+      if self.aimingObs[h].cell == self.cell then
+        -- perfect shot !
+        self.money = self.money + 1
+      end
+      table.insert(self.aimingObs[h].cell.flying, p)
+    else
       p.exploding = false
       p.animations = {exploding = utils.copyAnimation(exploding)}
       p.animations.exploding.t = 0
       table.insert(self.aimingObs[h].cell.missed, p)
-    else
-      p.x2 = self.cell.x + h - self.cell.h
-      local cell = utils.cellAt(p.x2, self.cell.y)
-      -- print('OK cell = ', cell.x .. ', ' .. cell.y)
-      p.x2 = p.x2 + cell.ox
-      p.y2 = cell.y - cell.h + cell.oy
-      if cell.walkable and cell:isEmpty() then
-        table.insert(cell.flying, p)
-      else
-        p.exploding = false
-        p.animations = {exploding = utils.copyAnimation(exploding)}
-        p.animations.exploding.t = 0
-        table.insert(cell.missed, p)
-      end
     end
     p.len = utils.len(p.x1, p.y1, p.x2, p.y2)
     p.x, p.y = p.x1, p.y1
@@ -293,6 +294,7 @@ local gameState = {
     p.quad = plane
     p.update = utils.updatePlane
     self.aiming = false
+    self.money = self.money - 1
   end
 }
 
@@ -319,7 +321,7 @@ function love.draw()
     utils.drawQuad(ruler, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
     love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
     for i = 9, 0, -1 do
-      if not gameState.aimingObs[i] then -- à ajuster
+      if gameState.aimingObs[i].onTop == true then -- à ajuster
       --   love.graphics.setColor(233 / 255, 54 / 255, 54 / 255)
       -- else
       --   love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
@@ -342,11 +344,11 @@ function love.draw()
   love.graphics.print(love.timer.getFPS(), 64, 64)
   love.graphics.print('money = '.. gameState.money, 128, 64)
   -- love.graphics.print(gameState.y, 64, 84)
-  local i = 0
-  for k, v in pairs(gameState.aimingObs) do
-    love.graphics.print(k..'='..utils.ternary(v, 'true', 'false'), 256, 32 + i * 20)
-    i = i + 1
-  end
+  -- local i = 0
+  -- for k, v in pairs(gameState.aimingObs) do
+  --   love.graphics.print(k..'='..utils.ternary(v, 'true', 'false'), 256, 32 + i * 20)
+  --   i = i + 1
+  -- end
   -- love.graphics.print(gameState.DEBUG_T, 400, 64)
   utils.setColor()
   -- utils.drawWalkingAreas()
@@ -371,26 +373,28 @@ function love.mousereleased(x, y, button)
 end
 
 function love.keypressed(key)
-  if key == '0' then
+  if key == '1' then
     gameState.DEBUG_T = 0
-  elseif key == '1' then
-    gameState.DEBUG_T = 0.1
   elseif key == '2' then
-    gameState.DEBUG_T = 0.2
+    gameState.DEBUG_T = 0.1
   elseif key == '3' then
-    gameState.DEBUG_T = 0.3
+    gameState.DEBUG_T = 0.2
   elseif key == '4' then
-    gameState.DEBUG_T = 0.4
+    gameState.DEBUG_T = 0.3
   elseif key == '5' then
-    gameState.DEBUG_T = 0.5
+    gameState.DEBUG_T = 0.4
   elseif key == '6' then
-    gameState.DEBUG_T = 0.6
+    gameState.DEBUG_T = 0.5
   elseif key == '7' then
-    gameState.DEBUG_T = 0.7
+    gameState.DEBUG_T = 0.6
   elseif key == '8' then
-    gameState.DEBUG_T = 0.8
+    gameState.DEBUG_T = 0.7
   elseif key == '9' then
+    gameState.DEBUG_T = 0.8
+  elseif key == '0' then
     gameState.DEBUG_T = 0.9
+  elseif key == ')' then
+    gameState.DEBUG_T = nil
   end
 end
 

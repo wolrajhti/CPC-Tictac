@@ -140,6 +140,9 @@ function utils.drawCells(gameState) -- beurk beurk beurk
     for j, missed in ipairs(cell.missed) do
       utils.drawQuad(missed.quad, utils.worldCoordinates(missed.x, missed.y))
     end
+    -- if gameState.cell and gameState.cell.walkable and cell.walkable and gameState.cell.y == cell.y then
+    --   love.graphics.print(cell.x - gameState.cell.x..' '..cell.h, utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy))
+    -- end
   end
   if gameState.cell then
     utils.setColor()
@@ -176,21 +179,21 @@ function utils.cellAt(x, y)
 end
 
 function utils.heightThreshold(cell)
+  -- print('---------------')
   if not utils.cells[cell.y] then -- cas tout pourri, ne devrait pas exister
     return {}
   end
 
   local obs = {}
+  local onTop
   for i, neighbor in pairs(utils.cells[cell.y]) do
     if neighbor.walkable or cell.x < neighbor.x then
-      for dh = 0, neighbor.h - 1 do
+      onTop = neighbor.walkable and neighbor:isEmpty()
+      for dh = 0, neighbor.h do
         local h = neighbor.x + dh - cell.x
-        if h ~= cell.h then
-          if not obs[h] then
-            obs[h] = {cell = neighbor, h = dh}
-          elseif neighbor.x < obs[h].cell.x then
-            obs[h] = {cell = neighbor, h = dh}
-          end
+        -- print('h = '..neighbor.x..' + '..dh..' - '..cell.x.. ' = '..h..'(neighbor.x = '..neighbor.x..')')
+        if not obs[h] or neighbor.x < obs[h].cell.x then
+          obs[h] = {cell = neighbor, h = dh, onTop = onTop and dh == neighbor.h}
         end
       end
     end
