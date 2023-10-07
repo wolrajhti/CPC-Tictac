@@ -17,7 +17,8 @@ local textures = {
 local ruler = utils.initQuad(textures[1], 1, 1, 6, 46, nil, 43)
 local tick = utils.initQuad(textures[1], 20, 5, 6, 6)
 local goal = utils.initQuad(textures[1], 8, 12, 8, 8)
-local target = utils.initQuad(textures[1], 17, 17, 14, 14)
+-- local target = utils.initQuad(textures[1], 17, 17, 14, 14)
+local target = utils.initQuad(textures[3], 15, 19, 20, 10)
 local plane = utils.initQuad(textures[1], 19, 38, 11, 7, nil, 5)
 local stress = {
   utils.initQuad(textures[1], 48, 0, 12, 5, nil, 33),
@@ -224,14 +225,15 @@ local gameState = {
       end
     end
     if self.aiming then
-      self.t = self.t + self.aimingSpeed * dt
+      self.t = self.t + self.aimingSpeed * dt -- self.DEBUG_T
       local u, offset = self.t % 2, 0
       if u > 1 then
-        offset = -9 * (2 - u)
+        offset = -10 * (2 - u)
       else
-        offset = -9 * u
+        offset = -10 * u
       end
       self.y = self.cell.y + offset
+      -- print('cell.y = '..self.cell.y.. ', offset = '.. offset)
       if self.t > self.t0 + 6 then
         self:throw()
       end
@@ -248,7 +250,7 @@ local gameState = {
     self.aiming = true
     ivan.state = 'aiming'
     ivan.reverse = false
-    self.x, self.y = self.cell.x + self.cell.ox, self.cell.y + self.cell.oy
+    self.x, self.y = self.cell.x, self.cell.y
     self.aimingSpeed = 2 -- + .05 * self.cell.x pas besoin de faire du variable
     self.t = 2 * love.math.random()
     self.t0 = self.t
@@ -256,12 +258,14 @@ local gameState = {
   throw = function(self)
     ivan.state = 'idle'
     local h = self.cell.y - utils.round(self.y) -- entre 0 et 10
+    -- print('h = '..h..'('..self.cell.y..' - '..utils.round(self.y)..') raw y = '.. self.y)
     local p = {
       x1 = self.PX1,
       y1 = self.PY1,
       speed = self.FLYING_SPEED,
     }
     if self.aimingObs[h] then
+      -- print('OBS', self.aimingObs[h].cell.x .. ', ' .. self.aimingObs[h].cell.y, 'DEBUG-T = ' ..self.DEBUG_T)
       p.x2 = self.aimingObs[h].cell.x + self.aimingObs[h].cell.ox
       p.y2 = self.cell.y - self.aimingObs[h].h + self.aimingObs[h].cell.oy
       p.exploding = false
@@ -269,8 +273,9 @@ local gameState = {
       p.animations.exploding.t = 0
       table.insert(self.aimingObs[h].cell.missed, p)
     else
-      p.x2 = self.x + h - self.cell.h
+      p.x2 = self.cell.x + h - self.cell.h
       local cell = utils.cellAt(p.x2, self.cell.y)
+      -- print('OK cell = ', cell.x .. ', ' .. cell.y)
       p.x2 = p.x2 + cell.ox
       p.y2 = cell.y - cell.h + cell.oy
       if cell.walkable and cell:isEmpty() then
@@ -298,6 +303,7 @@ end
 
 love.graphics.setLineStyle('rough')
 love.graphics.setLineWidth(utils.ratio)
+love.graphics.setFont(fonts.default)
 
 function love.draw()
   love.graphics.setColor(1, 1, 1)
@@ -323,7 +329,7 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
     -- utils.drawQuad(goal, utils.worldCoordinates(gameState.cell.x, gameState.cell.y - gameState.cell.h))
     if gameState.aiming then
-      utils.drawQuad(target, utils.worldCoordinates(gameState.x, gameState.y))
+      utils.drawQuad(target, utils.worldCoordinates(gameState.x + gameState.cell.ox, gameState.y + gameState.cell.oy))
     end
   end
   -- utils.drawText(texts.ackboo.test[1], utils.worldCoordinates(PATH.at(P)))
