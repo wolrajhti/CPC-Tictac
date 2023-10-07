@@ -99,49 +99,46 @@ function utils.drawCells(gameState) -- beurk beurk beurk
     utils.getColor()
   end
   for i, cell in ipairs(utils.orderedCells) do
-    if cell.walkable then
-      if gameState.cell and gameState.cell.walkable and gameState.cell.y == cell.y then
-        love.graphics.setColor(.1, .1, .1, .2)
-        love.graphics.rectangle(
-          'fill',
-          (cell.x - .5) * utils.cw * utils.ratio,
-          (cell.y - .5) * utils.ch * utils.ratio,
-          utils.cw * utils.ratio,
-          utils.ch * utils.ratio
-        )
+    if gameState.cell and gameState.cell.walkable and cell.walkable and gameState.cell.y == cell.y then
+      love.graphics.setColor(.1, .1, .1, .2)
+      love.graphics.rectangle(
+        'fill',
+        (cell.x - .5) * utils.cw * utils.ratio,
+        (cell.y - .5) * utils.ch * utils.ratio,
+        utils.cw * utils.ratio,
+        utils.ch * utils.ratio
+      )
+      utils.setColor()
+    end
+    for i, agent in ipairs(cell.agents) do
+      if agent.behind == false then
+        utils.drawAgent(agent, gameState.stress)
+      end
+    end
+    if #cell.objs > 0 or cell.h ~= 0 then
+      if gameState.cell and gameState.cell.y < cell.y then
+        love.graphics.setColor(r, g, b, .2)
+      end
+      if cell.h ~= 0 and cell.walkable then
+        utils.drawQuad(gameState.mags[cell.h], utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy))
+      end
+      for j, obj in ipairs(cell.objs) do
+        utils.drawQuad(obj.quad, utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy - cell.h))
+      end
+      if gameState.cell and gameState.cell.y < cell.y then
         utils.setColor()
       end
-      for i, agent in ipairs(cell.agents) do
-        if agent.behind == false then
-          utils.drawAgent(agent, gameState.stress)
-        end
+    end
+    for i, agent in ipairs(cell.agents) do
+      if agent.behind then
+        utils.drawAgent(agent, gameState.stress)
       end
-      if #cell.objs > 0 or cell.h ~= 0 then
-        if gameState.cell and gameState.cell.y < cell.y then
-          love.graphics.setColor(r, g, b, .2)
-        end
-        local x, y = utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy)
-        if cell.h ~= 0 then
-          utils.drawQuad(gameState.mags[cell.h], x, y)
-        end
-        for j, obj in ipairs(cell.objs) do
-          utils.drawQuad(obj.quad, x, y)
-        end
-        if gameState.cell and gameState.cell.y < cell.y then
-          utils.setColor()
-        end
-      end
-      for i, agent in ipairs(cell.agents) do
-        if agent.behind then
-          utils.drawAgent(agent, gameState.stress)
-        end
-      end
-      for j, flying in ipairs(cell.flying) do
-        utils.drawQuad(flying.quad, utils.worldCoordinates(flying.x, flying.y))
-      end
-      for j, missed in ipairs(cell.missed) do
-        utils.drawQuad(missed.quad, utils.worldCoordinates(missed.x, missed.y))
-      end
+    end
+    for j, flying in ipairs(cell.flying) do
+      utils.drawQuad(flying.quad, utils.worldCoordinates(flying.x, flying.y))
+    end
+    for j, missed in ipairs(cell.missed) do
+      utils.drawQuad(missed.quad, utils.worldCoordinates(missed.x, missed.y))
     end
   end
   if gameState.cell then
@@ -168,8 +165,8 @@ function utils.cellAt(x, y)
       flying = {},
       missed = {},
       agents = {},
-      ox = 0, -- love.math.random() - .25,
-      oy = 0, -- love.math.random() - .25,
+      ox = -.15 + .3 * love.math.random(),
+      oy = -.15 + .3 * love.math.random(),
       isEmpty = utils.cellIsEmpty
     }
     table.insert(utils.orderedCells, utils.cells[y][x])
@@ -183,12 +180,17 @@ function utils.heightThreshold(cell)
     return {}
   end
 
-  local min, obs = cell.h, {}
+  local obs = {}
   for i, neighbor in pairs(utils.cells[cell.y]) do
     if neighbor.walkable or cell.x < neighbor.x then
-      for h = 0, neighbor.h - 2 do
-        if not obs[neighbor.x + h - cell.x] then
-          obs[neighbor.x + h - cell.x] = {cell = neighbor, h = h}
+      for dh = 0, neighbor.h - 1 do
+        local h = neighbor.x + dh - cell.x
+        if h ~= cell.h then
+          if not obs[h] then
+            obs[h] = {cell = neighbor, h = dh}
+          elseif neighbor.x < obs[h].cell.x then
+            obs[h] = {cell = neighbor, h = dh}
+          end
         end
       end
     end
