@@ -20,10 +20,10 @@ local utils = {
 }
 
 function utils.initCells()
-  for i, wa in ipairs(walkableAreas) do
-    for x = 1, wa.w do
-      for y = 1, wa.h do
-        utils.cellAt(x, y)
+  for i, wa in ipairs(utils.walkableAreas) do
+    for x = 0, wa.w do -- +1 pour l'init de l'obstacle du aimingSystem
+      for y = 0, wa.h - 1 do
+        utils.cellAt(wa.x + x, wa.y + y)
       end
     end
   end
@@ -57,7 +57,7 @@ function utils.sortCells()
 end
 
 function utils.alert(cell, agents)
-  nearest = utils.findNearest(gameState.agents, cell)
+  nearest = utils.findNearest(agents, cell)
   if nearest then
     nearest.agent.state = 'goingToWork'
     nearest.agent.target = cell
@@ -99,43 +99,49 @@ function utils.drawCells(gameState) -- beurk beurk beurk
     utils.getColor()
   end
   for i, cell in ipairs(utils.orderedCells) do
-    if gameState.cell and gameState.cell.walkable and gameState.cell.y == cell.y then
-      love.graphics.setColor(.1, .1, .1, .2)
-      love.graphics.rectangle(
-        'fill',
-        (cell.x - .5) * utils.cw * utils.ratio,
-        (cell.y - .5) * utils.ch * utils.ratio,
-        utils.cw * utils.ratio,
-        utils.ch * utils.ratio
-      )
-      utils.setColor()
-    end
-    for i, agent in ipairs(cell.agents) do
-      if agent.behind == false then
-        utils.drawAgent(agent, gameState.stress)
-      end
-    end
-    if #cell.objs > 0 then
-      if gameState.cell and gameState.cell.y < cell.y then
-        love.graphics.setColor(r, g, b, .2)
-      end
-      for j, obj in ipairs(cell.objs) do
-        utils.drawQuad(obj.quad, utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy)) -- à ne pas faire à chaque fois
-      end
-      if gameState.cell and gameState.cell.y < cell.y then
+    if cell.walkable then
+      if gameState.cell and gameState.cell.walkable and gameState.cell.y == cell.y then
+        love.graphics.setColor(.1, .1, .1, .2)
+        love.graphics.rectangle(
+          'fill',
+          (cell.x - .5) * utils.cw * utils.ratio,
+          (cell.y - .5) * utils.ch * utils.ratio,
+          utils.cw * utils.ratio,
+          utils.ch * utils.ratio
+        )
         utils.setColor()
       end
-    end
-    for i, agent in ipairs(cell.agents) do
-      if agent.behind then
-        utils.drawAgent(agent, gameState.stress)
+      for i, agent in ipairs(cell.agents) do
+        if agent.behind == false then
+          utils.drawAgent(agent, gameState.stress)
+        end
       end
-    end
-    for j, flying in ipairs(cell.flying) do
-      utils.drawQuad(flying.quad, utils.worldCoordinates(flying.x, flying.y))
-    end
-    for j, missed in ipairs(cell.missed) do
-      utils.drawQuad(missed.quad, utils.worldCoordinates(missed.x, missed.y))
+      if #cell.objs > 0 or cell.h ~= 0 then
+        if gameState.cell and gameState.cell.y < cell.y then
+          love.graphics.setColor(r, g, b, .2)
+        end
+        local x, y = utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy)
+        if cell.h ~= 0 then
+          utils.drawQuad(gameState.mags[cell.h], x, y)
+        end
+        for j, obj in ipairs(cell.objs) do
+          utils.drawQuad(obj.quad, x, y)
+        end
+        if gameState.cell and gameState.cell.y < cell.y then
+          utils.setColor()
+        end
+      end
+      for i, agent in ipairs(cell.agents) do
+        if agent.behind then
+          utils.drawAgent(agent, gameState.stress)
+        end
+      end
+      for j, flying in ipairs(cell.flying) do
+        utils.drawQuad(flying.quad, utils.worldCoordinates(flying.x, flying.y))
+      end
+      for j, missed in ipairs(cell.missed) do
+        utils.drawQuad(missed.quad, utils.worldCoordinates(missed.x, missed.y))
+      end
     end
   end
   if gameState.cell then
@@ -148,49 +154,46 @@ function utils.cellIsEmpty(self)
 end
 
 function utils.cellAt(x, y)
-  if not utils.cells[x] then
-    utils.cells[x] = {}
+  if not utils.cells[y] then
+    utils.cells[y] = {}
   end
-  if not utils.cells[x][y] then
-    utils.cells[x][y] = {
+  if not utils.cells[y][x] then
+    local walkable = utils.isWalkable(x, y)
+    utils.cells[y][x] = {
       x = x,
       y = y,
+      h = utils.ternary(walkable, 0, 10),
       walkable = utils.isWalkable(x, y),
       objs = {},
       flying = {},
       missed = {},
       agents = {},
-      ox = love.math.random() - .25,
-      oy = love.math.random() - .25,
+      ox = 0, -- love.math.random() - .25,
+      oy = 0, -- love.math.random() - .25,
       isEmpty = utils.cellIsEmpty
     }
-    table.insert(utils.orderedCells, utils.cells[x][y])
+    table.insert(utils.orderedCells, utils.cells[y][x])
     utils.sortCells()
   end
-  return utils.cells[x][y]
-end
-
-function utils.targetHeight(cell) -- TODO method
-  local h = 0
-  for i, v in ipairs(cell.objs) do
-    h = h + v.h
-  end
-  return h
+  return utils.cells[y][x]
 end
 
 function utils.heightThreshold(cell)
-  local min, max = 0, 10
-  for i, neighbor in ipairs(utils.cells[y]) do
-    if neighbor.x <= cell.x then
-      min = math.max(min, utils.targetHeight(neighbor) + neighbor.x - cell.x)
-    else
-      max = math.min(max, neighbor.x - cell.x - 1)
-      if neighbor.walkable == false then
-        return min, max
+  if not utils.cells[cell.y] then -- cas tout pourri, ne devrait pas exister
+    return {}
+  end
+
+  local min, obs = cell.h, {}
+  for i, neighbor in pairs(utils.cells[cell.y]) do
+    if neighbor.walkable or cell.x < neighbor.x then
+      for h = 0, neighbor.h - 2 do
+        if not obs[neighbor.x + h - cell.x] then
+          obs[neighbor.x + h - cell.x] = {cell = neighbor, h = h}
+        end
       end
     end
   end
-  return min, max
+  return obs
 end
 
 function utils.worldCoordinates(x, y)
@@ -543,5 +546,10 @@ function utils.findNearest(agents, cell)
     return candidates[math.random(1, #candidates)]
   end
 end
+
+utils.initCells() -- ULTRA SALE
+
+utils.cellAt(10, 45).h = 3
+utils.cellAt(14, 45).h = 5
 
 return utils

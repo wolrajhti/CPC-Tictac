@@ -41,7 +41,7 @@ local mags = {
   utils.initQuad(bookTexture, 70, 37, 11, 34, nil, 31),
   utils.initQuad(bookTexture, 80, 33, 11, 38, nil, 35),
   utils.initQuad(bookTexture, 90, 29, 11, 42, nil, 39),
-  utils.initQuad(bookTexture, 100, 25, 11, 46, nil, 43)
+  utils.initQuad(bookTexture, 100, 25, 11, 46, nil, 43) -- 10
 }
 
 local ivan = utils.initAgent(2, 11, 0)
@@ -157,6 +157,7 @@ local aiming = false
 
 local gameState = {
   article = article,
+  mags = mags,
   AIMING_WINDOW = 6, -- temps laissé au joueur pour viser
   PX1 = -2, PY1 = 30, -- départ des avions
   FLYING_SPEED = 30, -- vitesse des avions (variable ?)
@@ -164,7 +165,7 @@ local gameState = {
   aiming, -- bool
   aimingSpeed, -- vitesse de déplacement du viseur
   t0, t, -- date de début de la visé et date actuelle
-  x, y, -- position du viseur
+  x = 0, y = 0, -- position du viseur
   day = 1,
   time = 0,
   TIME_SPEED = 2, -- à ajuster
@@ -182,8 +183,10 @@ local gameState = {
   door = {image = door, cell = utils.cellAt(13, 34), ox = .5},
   OX = OX,
   OY = OY,
+  aimingObs = {},
   updateCell = function(self, x, y)
     self.cell = utils.cellAt(utils.cellCoordinates(x, y))
+    self.aimingObs = utils.heightThreshold(self.cell)
   end,
   update = function(self, dt)
     self.time = self.time + self.TIME_SPEED * dt
@@ -200,14 +203,22 @@ local gameState = {
                      self.day == 27 or self.day == 28
       if self.weekend then
         for i, agent in ipairs(self.agents) do
-          if i ~= 1 then -- and agent.state ~= 'leaving' then -- ivan (bof bof ...)
+          if i ~= 1 and agent.state ~= 'leaving' then -- ivan (bof bof ...)
             agent.stress = math.min(math.max(0, agent.stress - 1), 8)
+          end
+        end
+      -- end
+      -- if self.endOfTheMonth then
+        for i, cell in ipairs(utils.orderedCells) do
+          if cell.walkable and cell.waitingFor == nil and #cell.objs ~= 0 then -- s'il y a un objet et que waitingFor est nil => c'est un article !
+            table.remove(cell.objs, #cell.objs)
+            cell.h = math.min(cell.h + 1, 5)
           end
         end
       end
     end
     if self.aiming then
-      self.t = self.t + self.aimingSpeed * dt
+      self.t = 0.1 --self.t + self.aimingSpeed * dt
       local u, offset = self.t % 2, 0
       if u > 1 then
         offset = -10 * (2 - u)
@@ -232,34 +243,47 @@ local gameState = {
     ivan.state = 'aiming'
     ivan.reverse = false
     self.x, self.y = self.cell.x, self.cell.y
-    self.aimingSpeed = 2 + .05 * self.cell.x
+    self.aimingSpeed = 2 -- + .05 * self.cell.x pas besoin de faire du variable
     self.t = 2 * love.math.random()
     self.t0 = self.t
   end,
   throw = function(self)
     ivan.state = 'idle'
+    local h = self.cell.y - utils.round(self.y)
+    print('h', h)
     local p = {
       x1 = self.PX1,
       y1 = self.PY1,
       speed = self.FLYING_SPEED,
-      x2 = self.x + self.cell.y - utils.targetHeight(self.cell) - utils.round(self.y),
-      y2 = self.cell.y
     }
+    if self.aimingObs[h] then
+      print('OBS')
+      p.x2 = self.aimingObs[h].cell.x
+      p.y2 = self.cell.y - self.aimingObs[h].h
+      p.exploding = false
+      p.animations = {exploding = utils.copyAnimation(exploding)}
+      p.animations.exploding.t = 0
+      table.insert(self.aimingObs[h].cell.missed, p)
+    else
+      -- CA DECONNE
+      print('OK !!!')
+      p.x2 = self.x + h
+      local cell = utils.cellAt(p.x2, self.cell.y)
+      p.y2 = cell.y + cell.h
+      if cell.walkable and cell:isEmpty() and cell.h then
+        table.insert(cell.flying, p)
+      else
+        p.exploding = false
+        p.animations = {exploding = utils.copyAnimation(exploding)}
+        p.animations.exploding.t = 0
+        table.insert(cell.missed, p)
+      end
+    end
     p.len = utils.len(p.x1, p.y1, p.x2, p.y2)
     p.x, p.y = p.x1, p.y1
     p.t = 0
     p.quad = plane
-    p.h = 0
     p.update = utils.updatePlane
-    local cell = utils.cellAt(p.x2, p.y2)
-    if cell.walkable and cell:isEmpty() then
-      table.insert(cell.flying, p)
-    else
-      p.exploding = false
-      p.animations = {exploding = utils.copyAnimation(exploding)}
-      p.animations.exploding.t = 0
-      table.insert(cell.missed, p)
-    end
     self.aiming = false
   end
 }
@@ -280,24 +304,25 @@ function love.draw()
   end
   utils.drawCalendar(gameState)
   -- utils.drawWalkingAreas()
+  utils.drawCells(gameState)
   if gameState.cell then
     utils.drawImage(cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
     utils.drawQuad(ruler, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
-    for i = -9, 0 do
-      if i <= gameState.cell.x - 17 then -- à ajuster
-        love.graphics.setColor(233 / 255, 54 / 255, 54 / 255)
-      else
-        love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
+    love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
+    for i = 9, 0, -1 do
+      if not gameState.aimingObs[i] then -- à ajuster
+      --   love.graphics.setColor(233 / 255, 54 / 255, 54 / 255)
+      -- else
+      --   love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
+        utils.drawQuad(tick, utils.worldCoordinates(gameState.cell.x, gameState.cell.y - i))
       end
-      utils.drawQuad(tick, utils.worldCoordinates(gameState.cell.x, gameState.cell.y + i))
     end
     love.graphics.setColor(1, 1, 1)
-    utils.drawQuad(goal, utils.worldCoordinates(gameState.cell.x, gameState.cell.y - utils.targetHeight(gameState.cell)))
+    -- utils.drawQuad(goal, utils.worldCoordinates(gameState.cell.x, gameState.cell.y - gameState.cell.h))
     if gameState.aiming then
       utils.drawQuad(target, utils.worldCoordinates(gameState.x, gameState.y))
     end
   end
-  utils.drawCells(gameState)
   -- utils.drawText(texts.ackboo.test[1], utils.worldCoordinates(PATH.at(P)))
   -- utils.drawText(texts.izual.test[1], utils.worldCoordinates(5, 40))
   -- utils.drawText(texts.sebum.test[1], sx, sy)
@@ -306,7 +331,14 @@ function love.draw()
   utils.getColor()
   love.graphics.setColor(0, 0, 0)
   love.graphics.print(love.timer.getFPS(), 64, 64)
+  love.graphics.print(gameState.y, 64, 84)
+  -- local i = 0
+  -- for k, v in pairs(gameState.aimingObs) do
+  --   love.graphics.print(k..'='..utils.ternary(v, 'true', 'false'), 256, 32 + i * 20)
+  --   i = i + 1
+  -- end
   utils.setColor()
+  utils.drawWalkingAreas()
 end
 
 function love.mousemoved(x, y)
