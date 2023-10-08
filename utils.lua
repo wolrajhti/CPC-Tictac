@@ -49,6 +49,16 @@ function utils.isWalkable(x, y)
   return false
 end
 
+function utils.isRedacWalkable(x, y)
+  for i, wa in ipairs(utils.walkableAreas) do
+    if wa.x <= x and x < wa.x + wa.w and
+       wa.y <= y and y < wa.y + wa.h then
+      return 4 <= i and i <= 6
+    end
+  end
+  return false
+end
+
 function utils.cellComp(c1, c2)
   return c1.y < c2.y
 end
@@ -100,7 +110,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
     utils.getColor()
   end
   for i, cell in ipairs(utils.orderedCells) do
-    if gameState.cell and gameState.cell.walkable and cell.walkable and gameState.cell.y == cell.y then
+    if gameState.cell and gameState.cell.redacWalkable and cell.redacWalkable and gameState.cell.y == cell.y then
       love.graphics.setColor(.1, .1, .1, .2)
       love.graphics.rectangle(
         'fill',
@@ -117,10 +127,10 @@ function utils.drawCells(gameState) -- beurk beurk beurk
       end
     end
     if #cell.objs > 0 or cell.h ~= 0 then
-      if gameState.cell and gameState.cell.walkable and gameState.cell.y < cell.y then
+      if gameState.cell and gameState.cell.redacWalkable and gameState.cell.y < cell.y then
         love.graphics.setColor(r, g, b, .2)
       end
-      if cell.h ~= 0 and cell.walkable then
+      if cell.h ~= 0 and cell.redacWalkable then
         utils.drawQuad(gameState.mags[cell.h], utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy))
       end
       for j, obj in ipairs(cell.objs) do
@@ -164,7 +174,8 @@ function utils.cellAt(x, y)
       x = x,
       y = y,
       h = utils.ternary(walkable, 0, 10),
-      walkable = utils.isWalkable(x, y),
+      walkable = walkable,
+      redacWalkable = utils.isRedacWalkable(x, y),
       objs = {},
       flying = {},
       missed = {},
@@ -188,8 +199,8 @@ function utils.heightThreshold(cell)
   local obs = {}
   local onTop
   for i, neighbor in pairs(utils.cells[cell.y]) do
-    if neighbor.walkable or cell.x < neighbor.x then
-      onTop = neighbor.walkable and neighbor:isEmpty()
+    if neighbor.redacWalkable or cell.x < neighbor.x then
+      onTop = neighbor.redacWalkable and neighbor:isEmpty()
       for dh = 0, neighbor.h do
         local h = neighbor.x + dh - cell.x
         -- print('h = '..neighbor.x..' + '..dh..' - '..cell.x.. ' = '..h..'(neighbor.x = '..neighbor.x..')')
@@ -522,7 +533,7 @@ function utils.drawCalendar(gameState)
 end
 
 local N = {-1, -1, 0, -1, 1, -1, 1, 0, 1, 1, 0, 1, -1, 1, -1, 0}
-local MAX_DIST = 2 * math.sqrt(2) -- à régler
+local MAX_DIST = 4 * math.sqrt(2) -- TODO à réduire en fonction du temps qui passe -> plus de mag -> moins de perception
 function utils.findNearest(agents, cell)
   local candidates = {}
   local neighbor
@@ -534,7 +545,7 @@ function utils.findNearest(agents, cell)
       if minDist < MAX_DIST then -- et n'est pas trop loin
         for k = 1, #N, 2 do -- pour chaque case voisine
           neighbor = utils.cellAt(cell.x + N[k], cell.y + N[k + 1])
-          if neighbor.walkable and neighbor:isEmpty() then -- si disponible
+          if neighbor.redacWalkable and neighbor:isEmpty() then -- si disponible
             dist = utils.len(agent.x, agent.y, neighbor.x, neighbor.y)
             if dist < minDist then
               candidates = {{agent = agent, neighbor = neighbor}}

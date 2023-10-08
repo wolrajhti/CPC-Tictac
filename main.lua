@@ -241,7 +241,7 @@ local gameState = {
       -- if self.endOfTheMonth then
         local needsUpdate = false
         for i, cell in ipairs(utils.orderedCells) do
-          if cell.walkable and #cell.objs ~= 0 then
+          if cell.redacWalkable and #cell.objs ~= 0 then
             needsUpdate = needsUpdate or self.cell and cell.y == self.cell.y
             table.remove(cell.objs, #cell.objs)
             if cell.waitingFor == nil then -- s'il y a un objet et que waitingFor est nil => c'est un article !
@@ -277,7 +277,7 @@ local gameState = {
     end
   end,
   aim = function(self)
-    if self.cell.walkable then
+    if self.cell.redacWalkable then
       self.aiming = true
       ivan.state = 'aiming'
       ivan.reverse = false
@@ -340,7 +340,7 @@ function love.draw()
   utils.drawCalendar(gameState)
   -- utils.drawWalkingAreas()
   utils.drawCells(gameState)
-  if gameState.cell and gameState.cell.walkable then
+  if gameState.cell and gameState.cell.redacWalkable then
     utils.drawImage(cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
     utils.drawQuad(ruler, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
     love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
