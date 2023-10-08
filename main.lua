@@ -11,14 +11,26 @@ local textures = {
   love.graphics.newImage('assets/sprites/aim_system1.png'),
   love.graphics.newImage('assets/sprites/aim_system2.png'),
   love.graphics.newImage('assets/sprites/aim_system3.png'),
-  love.graphics.newImage('assets/sprites/aim_system4.png'),
-  love.graphics.newImage('assets/sprites/aim_system5.png'),
+  love.graphics.newImage('assets/sprites/aim_system4.png')
 }
+local dollarStart = utils.initQuad(textures[1], 49, 34, 3, 13)
+local dollarStack = {
+  utils.initQuad(textures[1], 52, 34, 3, 13),
+  utils.initQuad(textures[1], 55, 34, 3, 13),
+  utils.initQuad(textures[1], 58, 34, 3, 13),
+  utils.initQuad(textures[1], 61, 34, 3, 13),
+  utils.initQuad(textures[1], 64, 34, 3, 13),
+  utils.initQuad(textures[1], 67, 34, 3, 13),
+  utils.initQuad(textures[1], 70, 34, 3, 13),
+  utils.initQuad(textures[1], 73, 34, 3, 13),
+  utils.initQuad(textures[1], 76, 34, 3, 13),
+}
+local dollarEnd = utils.initQuad(textures[1], 79, 34, 8, 13, .5)
 local ruler = utils.initQuad(textures[1], 1, 1, 6, 46, nil, 43)
 local tick = utils.initQuad(textures[1], 20, 5, 6, 6)
 local goal = utils.initQuad(textures[1], 8, 12, 8, 8)
 -- local target = utils.initQuad(textures[1], 17, 17, 14, 14)
-local target = utils.initQuad(textures[3], 15, 19, 20, 10)
+local target = utils.initQuad(textures[2], 15, 19, 20, 10)
 local plane = utils.initQuad(textures[1], 19, 38, 11, 7, nil, 5)
 local stress = {
   utils.initQuad(textures[1], 48, 0, 12, 5, nil, 33),
@@ -116,7 +128,7 @@ ellen.animations.work = ellen.animations.walking
 local aimingFrames = utils.slice(characters, 13)
 ivan.animations.aiming = utils.initAnimation(aimingFrames, 2, 0, 0, 21, 31, nil, 28)
 
-exploding = utils.initAnimation(textures, 3, 16, 32, 16, 14, 9, 11, true)
+exploding = utils.initAnimation(textures, 3, 15, 32, 18, 15, 9, 11, true)
 
 local W, H = love.graphics.getDimensions()
 local OX, OY = W / 2, H / 2
@@ -170,7 +182,7 @@ local cell
 local aiming = false
 
 local gameState = {
-  money = 10,
+  money = 50,
   magCount = 0,
   articleCount = 0,
   DEBUG_T = 0,
@@ -363,7 +375,15 @@ function love.draw()
   -- end
   -- love.graphics.print(gameState.DEBUG_T, 400, 64)
   utils.setColor()
-  utils.drawWalkingAreas()
+  -- utils.drawWalkingAreas()
+  local dx, dy = utils.worldCoordinates(2.5, 1)
+  utils.drawQuad(dollarStart, dx, dy)
+  for i = 0, math.min(200, gameState.money) do --math.ceil(gameState.money / 5) do
+  -- for i = 0, math.ceil(gameState.money / 5) do
+    utils.drawQuad(dollarStack[i % #dollarStack + 1], dx + (i + 1) * utils.ratio, dy)
+  end
+  utils.drawQuad(dollarEnd, dx + (math.min(200, gameState.money) + 1) * utils.ratio, dy)
+  -- utils.drawQuad(dollarEnd, dx + (math.ceil(gameState.money / 5) + 1) * utils.ratio, dy)
 end
 
 function love.mousemoved(x, y)
