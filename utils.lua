@@ -251,13 +251,16 @@ function utils.updateAnimation(self, dt)
 end
 
 function utils.initAnimation(frames, speed, x, y, width, height, ox, oy, once)
+  if not width then
+    width, height = frames[1]:getDimensions()
+  end
   return {
     t = love.math.random(),
     update = utils.ternary(once, utils.updateAnimation, utils.updateAnimationLoop),
     speed = speed,
     texture = frames[1],
     frames = frames,
-    quad = love.graphics.newQuad(x, y, width, height, frames[1]:getDimensions()),
+    quad = love.graphics.newQuad(x or 0, y or 0, width, height, frames[1]:getDimensions()),
     ox = ox or width / 2,
     oy = oy or height / 2,
     once = once

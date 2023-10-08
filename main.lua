@@ -3,7 +3,42 @@ love.graphics.setDefaultFilter('nearest', 'nearest')
 -- sprites
 local utils = require 'utils'
 
-local background = utils.initImage('assets/sprites/full_scene_2.png')
+local background = utils.initImage('assets/sprites/background.png')
+local wavesFrames = {
+  love.graphics.newImage('assets/sprites/waves/waves1.png'),
+  love.graphics.newImage('assets/sprites/waves/waves2.png'),
+  love.graphics.newImage('assets/sprites/waves/waves3.png'),
+  love.graphics.newImage('assets/sprites/waves/waves4.png'),
+  love.graphics.newImage('assets/sprites/waves/waves5.png'),
+  love.graphics.newImage('assets/sprites/waves/waves6.png')
+}
+table.insert(wavesFrames, wavesFrames[5])
+table.insert(wavesFrames, wavesFrames[4])
+table.insert(wavesFrames, wavesFrames[3])
+table.insert(wavesFrames, wavesFrames[2])
+local waves = utils.initAnimation(wavesFrames, .01)
+local cloudsFrames = {
+  love.graphics.newImage('assets/sprites/clouds/clouds1.png'),
+  love.graphics.newImage('assets/sprites/clouds/clouds2.png'),
+  love.graphics.newImage('assets/sprites/clouds/clouds3.png'),
+  love.graphics.newImage('assets/sprites/clouds/clouds4.png'),
+  love.graphics.newImage('assets/sprites/clouds/clouds5.png'),
+  love.graphics.newImage('assets/sprites/clouds/clouds6.png')
+}
+table.insert(cloudsFrames, cloudsFrames[5])
+table.insert(cloudsFrames, cloudsFrames[4])
+table.insert(cloudsFrames, cloudsFrames[3])
+table.insert(cloudsFrames, cloudsFrames[2])
+local clouds = utils.initAnimation(cloudsFrames, .02)
+local logosFrames = {
+  love.graphics.newImage('assets/sprites/logos/logos1.png'),
+  love.graphics.newImage('assets/sprites/logos/logos2.png'),
+  love.graphics.newImage('assets/sprites/logos/logos3.png'),
+  love.graphics.newImage('assets/sprites/logos/logos4.png'),
+  love.graphics.newImage('assets/sprites/logos/logos5.png'),
+  love.graphics.newImage('assets/sprites/logos/logos6.png')
+}
+local logos = utils.initAnimation(logosFrames, .1)
 local foreground = utils.initImage('assets/sprites/foreground.png')
 local door = utils.initImage('assets/sprites/door.png')
 local textures = {
@@ -32,6 +67,7 @@ local goal = utils.initQuad(textures[1], 8, 12, 8, 8)
 -- local target = utils.initQuad(textures[1], 17, 17, 14, 14)
 local target = utils.initQuad(textures[2], 15, 19, 20, 10)
 local plane = utils.initQuad(textures[1], 19, 38, 11, 7, nil, 5)
+local placeholder = utils.initQuad(textures[1], 71, 8, 12, 6)
 local stress = {
   utils.initQuad(textures[1], 48, 0, 12, 5, nil, 33),
   utils.initQuad(textures[1], 48, 4, 12, 5, nil, 33),
@@ -187,6 +223,7 @@ local gameState = {
   articleCount = 0,
   DEBUG_T = 0,
   article = article,
+  placeholder = placeholder,
   mags = mags,
   AIMING_WINDOW = 6, -- temps laissé au joueur pour viser
   PX1 = -2, PY1 = 15, -- départ des avions
@@ -324,6 +361,9 @@ local gameState = {
 
 function love.update(dt)
   gameState:update(dt)
+  logos:update(dt)
+  waves:update(dt)
+  clouds:update(dt)
   utils.updateCells(dt, gameState)
 end
 
@@ -334,6 +374,9 @@ love.graphics.setFont(fonts.default)
 function love.draw()
   love.graphics.setColor(1, 1, 1)
   utils.drawImage(background, OX, OY)
+  utils.drawQuad(logos, OX, OY)
+  utils.drawQuad(waves, OX, OY)
+  utils.drawQuad(clouds, OX, OY)
   if #gameState.door.cell.agents ~= 0 then
     utils.drawImage(door, OX, OY)
   end
