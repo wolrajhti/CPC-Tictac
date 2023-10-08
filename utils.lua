@@ -59,6 +59,14 @@ function utils.isRedacWalkable(x, y)
   return false
 end
 
+function utils.lineAt(y)
+  for i = 4, 6 do
+    if utils.walkableAreas[i].y <= y and y < utils.walkableAreas[i].y + utils.walkableAreas[i].h then
+      return y, utils.walkableAreas[i].x, utils.walkableAreas[i].w
+    end
+  end
+end
+
 function utils.cellComp(c1, c2)
   return c1.y < c2.y
 end
@@ -110,17 +118,6 @@ function utils.drawCells(gameState) -- beurk beurk beurk
     utils.getColor()
   end
   for i, cell in ipairs(utils.orderedCells) do
-    if gameState.cell and gameState.cell.redacWalkable and cell.redacWalkable and gameState.cell.y == cell.y then
-      love.graphics.setColor(.1, .1, .1, .2)
-      love.graphics.rectangle(
-        'fill',
-        (cell.x - .5) * utils.cw * utils.ratio,
-        (cell.y - .5) * utils.ch * utils.ratio,
-        utils.cw * utils.ratio,
-        utils.ch * utils.ratio
-      )
-      utils.setColor()
-    end
     for i, agent in ipairs(cell.agents) do
       if agent.behind == false then
         utils.drawAgent(agent, gameState.stress)
@@ -509,6 +506,20 @@ function utils.drawWalkingAreas()
       wa.h * utils.ch * utils.ratio
     )
   end
+  utils.setColor()
+end
+
+function utils.drawLine(y, pos, width)
+  utils.getColor()
+  love.graphics.setColor(.1, .1, .1, .2)
+  x, y = utils.worldCoordinates(pos, y)
+  love.graphics.rectangle(
+    'fill',
+    x - .5 * utils.cw * utils.ratio,
+    y - .5 * utils.ch * utils.ratio,
+    width * utils.cw * utils.ratio,
+    1 * utils.ch * utils.ratio
+  )
   utils.setColor()
 end
 

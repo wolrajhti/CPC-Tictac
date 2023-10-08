@@ -339,6 +339,9 @@ function love.draw()
   end
   utils.drawCalendar(gameState)
   -- utils.drawWalkingAreas()
+  if gameState.cell and gameState.cell.redacWalkable then
+    utils.drawLine(utils.lineAt(gameState.cell.y))
+  end
   utils.drawCells(gameState)
   if gameState.cell and gameState.cell.redacWalkable then
     utils.drawImage(cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
