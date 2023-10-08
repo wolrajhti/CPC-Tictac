@@ -2,19 +2,20 @@ local utils = {
   ratio = 1,
   cw = 16,
   ch = 4,
+  sy = .5,
   cells = {},
   orderedCells = {},
   walkableAreas = {
     -- ivan
-    {x = 1, y = 4, w = 1, h = 12},
-    {x = 2, y = 6, w = 1, h = 10},
-    {x = 3, y = 10, w = 1, h = 3},
+    {x = 1, y = 2, w = 1, h = 6},
+    {x = 2, y = 3, w = 1, h = 5},
+    {x = 3, y = 5, w = 1, h = 2},
     -- redac
-    {x = 3, y = 36, w = 15, h = 5},
-    {x = 2, y = 41, w = 17, h = 6},
-    {x = 1, y = 47, w = 19, h = 2},
+    {x = 3, y = 18, w = 15, h = 3},
+    {x = 2, y = 21, w = 17, h = 2},
+    {x = 1, y = 23, w = 19, h = 2},
     -- door
-    {x = 13, y = 34, w = 1, h = 1}
+    {x = 13, y = 17, w = 1, h = 1}
   },
   r, g, b, a
 }
@@ -123,7 +124,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
         utils.drawQuad(gameState.mags[cell.h], utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy))
       end
       for j, obj in ipairs(cell.objs) do
-        utils.drawQuad(obj.quad, utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy - cell.h))
+        utils.drawQuad(obj.quad, utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy - cell.h * utils.sy))
       end
       if gameState.cell and gameState.cell.y < cell.y then
         utils.setColor()

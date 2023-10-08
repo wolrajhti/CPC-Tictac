@@ -32,6 +32,8 @@ local stress = {
 }
 local bookTexture = love.graphics.newImage('assets/sprites/books_2.png')
 local article = utils.initQuad(bookTexture, 0, 64, 11, 7)
+-- local article = utils.initQuad(bookTexture, 1, 80, 11, 7)
+-- TODO il faut quand meme écarter les piles pour les pb de clipping
 local mags = {
   utils.initQuad(bookTexture, 10, 61, 11, 10, nil, 7),
   utils.initQuad(bookTexture, 20, 57, 11, 14, nil, 11),
@@ -43,13 +45,23 @@ local mags = {
   utils.initQuad(bookTexture, 80, 33, 11, 38, nil, 35),
   utils.initQuad(bookTexture, 90, 29, 11, 42, nil, 39),
   utils.initQuad(bookTexture, 100, 25, 11, 46, nil, 43) -- 10
+  -- utils.initQuad(bookTexture, 12, 73, 11, 14, nil, 11),
+  -- utils.initQuad(bookTexture, 23, 65, 11, 22, nil, 19),
+  -- utils.initQuad(bookTexture, 34, 57, 11, 30, nil, 27),
+  -- utils.initQuad(bookTexture, 45, 49, 11, 38, nil, 35),
+  -- utils.initQuad(bookTexture, 56, 41, 11, 46, nil, 43),
+  -- utils.initQuad(bookTexture, 67, 33, 11, 54, nil, 51),
+  -- utils.initQuad(bookTexture, 78, 25, 11, 62, nil, 59),
+  -- utils.initQuad(bookTexture, 89, 17, 11, 70, nil, 67),
+  -- utils.initQuad(bookTexture, 100, 9, 11, 78, nil, 75),
+  -- utils.initQuad(bookTexture, 111, 1, 11, 86, nil, 83) -- 10
 }
 
-local ivan = utils.initAgent(2, 11, 0)
-local ackboo = utils.initAgent(6, 40)
-local izual = utils.initAgent(9, 40)
-local sebum = utils.initAgent(12, 40)
-local ellen = utils.initAgent(15, 40)
+local ivan = utils.initAgent(2, 7, 0)
+local ackboo = utils.initAgent(6, 20)
+local izual = utils.initAgent(9, 20)
+local sebum = utils.initAgent(12, 20)
+local ellen = utils.initAgent(15, 20)
 
 local characters = {
   love.graphics.newImage('assets/sprites/cpc_assets1.png'),
@@ -111,7 +123,8 @@ local OX, OY = W / 2, H / 2
 
 utils.ratio = 4 -- ternary(W / H < w / h, W / w, H / h)
 utils.cw = 16
-utils.ch = 4
+utils.ch = 8
+utils.sy = .5
 
 -- fonts
 local fonts = {
@@ -164,13 +177,13 @@ local gameState = {
   article = article,
   mags = mags,
   AIMING_WINDOW = 6, -- temps laissé au joueur pour viser
-  PX1 = -2, PY1 = 30, -- départ des avions
+  PX1 = -2, PY1 = 15, -- départ des avions
   FLYING_SPEED = 30, -- vitesse des avions (variable ?)
   cell, -- case survolée
   aiming, -- bool
   aimingSpeed, -- vitesse de déplacement du viseur
   t0, t, -- date de début de la visé et date actuelle
-  x = 0, y = 0, -- position du viseur
+  offset = 0, -- position du viseur
   day = 1,
   time = 0,
   TIME_SPEED = 2, -- à ajuster
@@ -185,7 +198,7 @@ local gameState = {
   },
   stress = stress, -- c'est n'importe quoi utils, gameState, les globals, ...
   agents = {ivan, ackboo, izual, sebum, ellen},
-  door = {image = door, cell = utils.cellAt(13, 34), ox = .5},
+  door = {image = door, cell = utils.cellAt(13, 17), ox = .5},
   OX = OX,
   OY = OY,
   aimingObs = {},
@@ -232,13 +245,12 @@ local gameState = {
     end
     if self.aiming then
       self.t = self.DEBUG_T or (self.t + self.aimingSpeed * dt)
-      local u, offset = self.t % 2, 0
+      local u = self.t % 2
       if u > 1 then
-        offset = -10 * (2 - u)
+        self.offset = -10 * (2 - u)
       else
-        offset = -10 * u
+        self.offset = -10 * u
       end
-      self.y = self.cell.y + offset
       -- print('cell.y = '..self.cell.y.. ', offset = '.. offset)
       if self.t > self.t0 + 6 then
         self:throw()
@@ -257,15 +269,15 @@ local gameState = {
       self.aiming = true
       ivan.state = 'aiming'
       ivan.reverse = false
-      self.x, self.y = self.cell.x, self.cell.y
       self.aimingSpeed = 2 -- + .05 * self.cell.x pas besoin de faire du variable
       self.t = 2 * love.math.random()
       self.t0 = self.t
     end
   end,
   throw = function(self)
+    self.aimingObs = utils.heightThreshold(self.cell)
     ivan.state = 'idle'
-    local h = self.cell.y - utils.round(self.y) -- entre 0 et 10
+    local h = - utils.round(self.offset) -- entre 0 et 10
     -- print('h = '..h..'('..self.cell.y..' - '..utils.round(self.y)..') raw y = '.. self.y)
     local p = {
       x1 = self.PX1,
@@ -325,13 +337,13 @@ function love.draw()
       --   love.graphics.setColor(233 / 255, 54 / 255, 54 / 255)
       -- else
       --   love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
-        utils.drawQuad(tick, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy - i))
+        utils.drawQuad(tick, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy - i * utils.sy))
       end
     end
     love.graphics.setColor(1, 1, 1)
     -- utils.drawQuad(goal, utils.worldCoordinates(gameState.cell.x, gameState.cell.y - gameState.cell.h))
     if gameState.aiming then
-      utils.drawQuad(target, utils.worldCoordinates(gameState.x + gameState.cell.ox, gameState.y + gameState.cell.oy))
+      utils.drawQuad(target, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy + gameState.offset * utils.sy))
     end
   end
   -- utils.drawText(texts.ackboo.test[1], utils.worldCoordinates(PATH.at(P)))
@@ -351,7 +363,7 @@ function love.draw()
   -- end
   -- love.graphics.print(gameState.DEBUG_T, 400, 64)
   utils.setColor()
-  -- utils.drawWalkingAreas()
+  utils.drawWalkingAreas()
 end
 
 function love.mousemoved(x, y)
