@@ -6,7 +6,6 @@ local utils = require 'utils'
 local background = utils.initImage('assets/sprites/full_scene_2.png')
 local foreground = utils.initImage('assets/sprites/foreground.png')
 local door = utils.initImage('assets/sprites/door.png')
-local cursor = utils.initImage('assets/sprites/cursor.png')
 local textures = {
   love.graphics.newImage('assets/sprites/aim_system1.png'),
   love.graphics.newImage('assets/sprites/aim_system2.png'),
@@ -26,6 +25,7 @@ local dollarStack = {
   utils.initQuad(textures[1], 76, 34, 3, 13),
 }
 local dollarEnd = utils.initQuad(textures[1], 79, 34, 8, 13, .5)
+local cursor = utils.initQuad(textures[1], 66, 16, 22, 14)
 local ruler = utils.initQuad(textures[1], 1, 1, 6, 46, nil, 43)
 local tick = utils.initQuad(textures[1], 20, 5, 6, 6)
 local goal = utils.initQuad(textures[1], 8, 12, 8, 8)
@@ -47,16 +47,16 @@ local article = utils.initQuad(bookTexture, 0, 64, 11, 7)
 -- local article = utils.initQuad(bookTexture, 1, 80, 11, 7)
 -- TODO il faut quand meme écarter les piles pour les pb de clipping
 local mags = {
-  utils.initQuad(bookTexture, 10, 61, 11, 10, nil, 7),
-  utils.initQuad(bookTexture, 20, 57, 11, 14, nil, 11),
-  utils.initQuad(bookTexture, 30, 53, 11, 18, nil, 15),
-  utils.initQuad(bookTexture, 40, 49, 11, 22, nil, 19),
-  utils.initQuad(bookTexture, 50, 45, 11, 26, nil, 23),
-  utils.initQuad(bookTexture, 60, 41, 11, 30, nil, 27),
-  utils.initQuad(bookTexture, 70, 37, 11, 34, nil, 31),
-  utils.initQuad(bookTexture, 80, 33, 11, 38, nil, 35),
-  utils.initQuad(bookTexture, 90, 29, 11, 42, nil, 39),
-  utils.initQuad(bookTexture, 100, 25, 11, 46, nil, 43) -- 10
+  utils.initQuad(bookTexture, 11, 61, 11, 10, nil, 7),
+  utils.initQuad(bookTexture, 22, 57, 11, 14, nil, 11),
+  utils.initQuad(bookTexture, 33, 53, 11, 18, nil, 15),
+  utils.initQuad(bookTexture, 44, 49, 11, 22, nil, 19),
+  utils.initQuad(bookTexture, 55, 45, 11, 26, nil, 23),
+  utils.initQuad(bookTexture, 66, 41, 11, 30, nil, 27),
+  utils.initQuad(bookTexture, 77, 37, 11, 34, nil, 31),
+  utils.initQuad(bookTexture, 88, 33, 11, 38, nil, 35),
+  utils.initQuad(bookTexture, 99, 29, 11, 42, nil, 39),
+  utils.initQuad(bookTexture, 110, 25, 11, 46, nil, 43) -- 10
   -- utils.initQuad(bookTexture, 12, 73, 11, 14, nil, 11),
   -- utils.initQuad(bookTexture, 23, 65, 11, 22, nil, 19),
   -- utils.initQuad(bookTexture, 34, 57, 11, 30, nil, 27),
@@ -344,7 +344,7 @@ function love.draw()
   end
   utils.drawCells(gameState)
   if gameState.cell and gameState.cell.redacWalkable then
-    utils.drawImage(cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
+    utils.drawQuad(cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
     utils.drawQuad(ruler, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
     love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
     for i = 9, 0, -1 do
