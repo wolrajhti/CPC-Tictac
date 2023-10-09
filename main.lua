@@ -31,7 +31,9 @@ local texts = {
   article = utils.text.init(fonts.default, ""),
   mag = utils.text.init(fonts.default, ""),
   gameOver = utils.text.init(fonts.default, "GAME OVER"),
-  home = utils.text.init(fonts.default, "CPC TicTac / Air Pigiste / Wolrajhti 2023 (Make something horrible 2023)"),
+
+  
+  home = utils.text.init(fonts.default, "an Air Pigiste game for the \"Make Something Horrible, l'edition des 20 ans\" by Wolrajhti"),
 }
 
 local loadTongues = require 'utils.tongues'
