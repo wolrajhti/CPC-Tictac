@@ -251,6 +251,7 @@ local gameState = {
     end
     self.aimingObs = utils.heightThreshold(self.cell)
     ivan.state = 'idle'
+    ivan.tongue:aim()
     local h = - utils.round(self.offset) -- entre 0 et 10
     -- print('h = '..h..'('..self.cell.y..' - '..utils.round(self.y)..') raw y = '.. self.y)
     local p = {

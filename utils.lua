@@ -286,6 +286,9 @@ function utils.initAgent(x, y, tongue, animations, stress)
   for i = 1, #tongue.texts.random do
     tongue.texts.random[i] = utils.text.init(tongue.font, tongue.texts.random[i])
   end
+  for i = 1, #tongue.texts.aim do
+    tongue.texts.aim[i] = utils.text.init(tongue.font, tongue.texts.aim[i])
+  end
   local agent = {
     isIvan = false,
     isAckboo = false,
@@ -450,7 +453,9 @@ function utils.updateAgent(agent, dt, gameState)
     agent.target = nil
     agent.stress = math.min(agent.stress + 1, 8)
     agent.state = 'idle'
-    agent.tongue:work()
+    if love.math.random() < .5 * dt then
+      agent.tongue:work()
+    end
   end
 
   -- head
@@ -458,7 +463,7 @@ function utils.updateAgent(agent, dt, gameState)
     if love.math.random() < .1 * dt then
       agent.headState = 'blink'
       agent.animations.head.blink.t = 0
-    elseif love.math.random() < .9 * dt then -- TODO remettre à .1
+    elseif love.math.random() < .1 * dt then
       agent.tongue:random()
     end
   elseif agent.headState ~= 'cry' then
