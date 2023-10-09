@@ -300,16 +300,6 @@ function utils.initAgent(x, y, animations, stress)
   return agent
 end
 
-function utils.initText(font, str)
-  text = love.graphics.newText(font, str)
-  local w, h = text:getDimensions()
-  return {
-    text = text,
-    w = w,
-    h = h
-  }
-end
-
 function utils.updateTime(t, speed, dt)
   return math.min(t + speed * dt, 1)
 end
@@ -344,24 +334,6 @@ end
 
 function utils.drawQuad(data, x, y, reverse) -- reverse pas terrible
   love.graphics.draw(data.texture, data.quad, x, y, 0, utils.ternary(reverse, -1, 1) * utils.ratio, utils.ratio, data.ox, data.oy)
-end
-
-function utils.drawText(data, x, y)
-  utils.getColor()
-  love.graphics.setColor(0, 0, 0, 0.3)
-  love.graphics.rectangle('fill',
-    x - (data.w / 2 + utils.ratio),
-    y - (data.h + 3 * utils.ratio) - 29 * utils.ratio,
-    data.w + 2 * utils.ratio,
-    data.h + 2 * utils.ratio
-  )
-  -- love.graphics.setColor(0, 0, 0)
-  -- love.graphics.rectangle('line', x - (tw / 2 + utils.ratio), y - (th + 3 * utils.ratio) - 29 * utils.ratio, tw + 2 * utils.ratio, th + 2 * utils.ratio)
-  love.graphics.setColor(1, 1, 1)
-  -- voir si plus performant si on utilise utils.ratio, utils.ratio à la place de 1, 1
-  love.graphics.draw(text, x, y - 29 * utils.ratio, 0, 1, 1, data.w / 2, data.h + 3 * utils.ratio)
-  love.graphics.circle('fill', x, y, 4)
-  utils.setColor(r, g, b, a)
 end
 
 function utils.ternary(cond, T, F)
@@ -458,6 +430,7 @@ function utils.updateAgent(agent, dt, gameState)
     local objs = agent.target.objs
     table.remove(objs, #objs) -- on retire le dernier objet (un avion)
     table.insert(objs, {quad = gameState.data.article})
+    gameState:setArticleCount(gameState.articleCount + 1)
     agent.target.waitingFor = nil -- le rédacteur a ramasser l'avion
     agent.target = nil
     agent.stress = math.min(agent.stress + 1, 8)
@@ -577,6 +550,8 @@ function utils.findNearest(agents, cell)
     return candidates[math.random(1, #candidates)]
   end
 end
+
+require('utils.text')(utils) -- à généraliser
 
 utils.initCells() -- ULTRA SALE
 

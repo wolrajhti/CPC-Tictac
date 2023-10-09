@@ -33,6 +33,11 @@ local fonts = {
 }
 
 local texts = {
+  start = utils.text.init(fonts.default, "C'est partiiii !"),
+  pause = utils.text.init(fonts.default, ""),
+  money = utils.text.init(fonts.default, ""),
+  article = utils.text.init(fonts.default, ""),
+  mag = utils.text.init(fonts.default, "")
   -- ackboo = {
   --   test = {
   --     utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
@@ -63,9 +68,44 @@ local cell
 local aiming = false
 
 local gameState = {
-  money = 50,
+  state = 'RUNNING',
+  texts = texts,
+  -- pause
+  pauseTimer = 2 * 60 + 55,
+  updatePauseTimer = function(self, dt)
+    self.pauseTimer = math.max(self.pauseTimer - dt, 0)
+    self:setPauseTimer(self.pauseTimer)
+    if self.pauseTimer == 0 then
+      self.state = 'RUNNING'
+    end
+  end,
+  setPauseTimer = function(self, time)
+    self.pauseTimer = time
+    self.texts.pause = utils.text.init(fonts.default, os.date("Reprise du direct dans %M:%S", time))
+  end,
+  -- money
+  money = 0,
+  setMoney = function(self, sum)
+    self.money = sum
+    self.texts.money = utils.text.init(fonts.default, string.format("X %d", sum))
+  end,
   magCount = 0,
+  setMagCount = function(self, count)
+    self.magCount = count
+    self.texts.mag = utils.text.init(fonts.default, string.format("n°%03d", count))
+  end,
+  -- article
   articleCount = 0,
+  articleTodoCount = 10,
+  setArticleCount = function(self, count)
+    self.articleCount = count
+    self.texts.article = utils.text.init(fonts.default, string.format("%d / %d", count, self.articleTodoCount))
+  end,
+  setArticleTodoCount = function(self, countTodo)
+    self.articleTodoCount = countTodo
+    self.texts.article = utils.text.init(fonts.default, string.format("%d / %d", self.articleCount, countTodo))
+  end,
+  -- à cleaner
   DEBUG_T = nil,
   data = data, -- contient les images, quads et animations
   AIMING_WINDOW = 6, -- temps laissé au joueur pour viser
@@ -94,69 +134,84 @@ local gameState = {
   OY = OY,
   aimingObs = {},
   updateCell = function(self, x, y)
-    self.cell = utils.cellAt(utils.cellCoordinates(x, y))
-    self.aimingObs = utils.heightThreshold(self.cell) -- TODO à maj en temps réel
+    if self.state ~= 'PAUSE' then
+      self.cell = utils.cellAt(utils.cellCoordinates(x, y))
+      self.aimingObs = utils.heightThreshold(self.cell) -- TODO à maj en temps réel
+    end
   end,
   update = function(self, dt)
-    self.time = self.time + self.TIME_SPEED * dt
-    while self.time > 1 do
-      self.time = self.time - 1
-      self.day = self.day + 1
-      if self.day > 30 then
-        self.day = self.day - 30
-      end
-      self.endOfTheMonth = self.day == 30
-      self.weekend = self.day == 6 or-- self.day == 7 or
-                     self.day == 13 or-- self.day == 14 or
-                     self.day == 20 or-- self.day == 21 or
-                     self.day == 27-- or self.day == 28
-      if self.weekend then
-        for i, agent in ipairs(self.agents) do
-          if i ~= 1 and agent.state ~= 'leaving' then -- ivan (bof bof ...)
-            agent.stress = math.min(math.max(0, agent.stress - 1), 8)
-          end
+    if self.state ~= 'PAUSE' then
+      self.time = self.time + self.TIME_SPEED * dt
+      while self.time > 1 do
+        self.time = self.time - 1
+        self.day = self.day + 1
+        if self.day > 30 then
+          self.day = self.day - 30
         end
-      -- end
-      -- if self.endOfTheMonth then
-        local needsUpdate = false
-        for i, cell in ipairs(utils.orderedCells) do
-          if cell.redacWalkable and #cell.objs ~= 0 then
-            needsUpdate = needsUpdate or self.cell and cell.y == self.cell.y
-            table.remove(cell.objs, #cell.objs)
-            if cell.waitingFor == nil then -- s'il y a un objet et que waitingFor est nil => c'est un article !
-              cell.h = math.min(cell.h + 1, 10)
-              self.money = self.money + 2
+        self.endOfTheMonth = self.day == 30
+        self.weekend = self.day == 6 or-- self.day == 7 or
+                      self.day == 13 or-- self.day == 14 or
+                      self.day == 20 or-- self.day == 21 or
+                      self.day == 27-- or self.day == 28
+        if self.weekend then
+          for i, agent in ipairs(self.agents) do
+            if i ~= 1 and agent.state ~= 'leaving' then -- ivan (bof bof ...)
+              agent.stress = math.min(math.max(0, agent.stress - 1), 8)
             end
           end
+        -- end
+        -- if self.endOfTheMonth then
+          self:setArticleCount(0)
+          self:setArticleTodoCount(self.articleTodoCount + 1)
+          self:setMagCount(self.magCount + 1)
+          local needsUpdate = false
+          for i, cell in ipairs(utils.orderedCells) do
+            if cell.redacWalkable and #cell.objs ~= 0 then
+              needsUpdate = needsUpdate or self.cell and cell.y == self.cell.y
+              table.remove(cell.objs, #cell.objs)
+              if cell.waitingFor == nil then -- s'il y a un objet et que waitingFor est nil => c'est un article !
+                cell.h = math.min(cell.h + 1, 10)
+                self:setMoney(self.money + 2)
+              end
+            end
+          end
+          if needsUpdate then
+            self.aimingObs = utils.heightThreshold(self.cell)
+          end
         end
-        if needsUpdate then
-          self.aimingObs = utils.heightThreshold(self.cell)
+      end
+      if self.aiming then
+        self.t = self.DEBUG_T or (self.t + self.aimingSpeed * dt)
+        local u = self.t % 2
+        if u > 1 then
+          self.offset = -10 * (2 - u)
+        else
+          self.offset = -10 * u
+        end
+        -- print('cell.y = '..self.cell.y.. ', offset = '.. offset)
+        if self.t > self.t0 + 6 then
+          self:throw()
         end
       end
-    end
-    if self.aiming then
-      self.t = self.DEBUG_T or (self.t + self.aimingSpeed * dt)
-      local u = self.t % 2
-      if u > 1 then
-        self.offset = -10 * (2 - u)
-      else
-        self.offset = -10 * u
+      for i = #self.agents, 1, -1 do
+        self.agents[i]:update(dt, self)
+        if self.agents[i].state == 'leaving' and self.agents[i].t == 1 then
+          utils.remove(self.agents[i].to.agents, self.agents[i])
+          table.remove(self.agents, i)
+        end
       end
-      -- print('cell.y = '..self.cell.y.. ', offset = '.. offset)
-      if self.t > self.t0 + 6 then
-        self:throw()
-      end
-    end
-    for i = #self.agents, 1, -1 do
-      self.agents[i]:update(dt, self)
-      if self.agents[i].state == 'leaving' and self.agents[i].t == 1 then
-        utils.remove(self.agents[i].to.agents, self.agents[i])
-        table.remove(self.agents, i)
-      end
+
+      self.data.logos:update(dt)
+      self.data.waves:update(dt)
+      self.data.clouds:update(dt)
+
+      utils.updateCells(dt, self)
+    else
+      self:updatePauseTimer(dt)
     end
   end,
   aim = function(self)
-    if self.cell.redacWalkable then
+    if ivan.state == 'idle' and self.cell.redacWalkable then
       self.aiming = true
       ivan.state = 'aiming'
       ivan.reverse = false
@@ -182,7 +237,7 @@ local gameState = {
     if self.aimingObs[h].onTop then
       if self.aimingObs[h].cell == self.cell then
         -- perfect shot !
-        self.money = self.money + 1
+        self:setMoney(self.money + 1)
       end
       table.insert(self.aimingObs[h].cell.flying, p)
     else
@@ -197,16 +252,17 @@ local gameState = {
     p.quad = self.data.plane
     p.update = utils.updatePlane
     self.aiming = false
-    self.money = self.money - 1
+    self:setMoney(self.money - 1)
   end
 }
 
+gameState:setMoney(50)
+gameState:setArticleCount(0)
+gameState:setArticleTodoCount(5)
+gameState:setMagCount(0)
+
 function love.update(dt)
   gameState:update(dt)
-  gameState.data.logos:update(dt)
-  gameState.data.waves:update(dt)
-  gameState.data.clouds:update(dt)
-  utils.updateCells(dt, gameState)
 end
 
 love.graphics.setLineStyle('rough')
@@ -262,7 +318,6 @@ function love.draw()
   utils.getColor()
   -- love.graphics.setColor(0, 0, 0)
   love.graphics.print(love.timer.getFPS(), 64, 64)
-  love.graphics.print('money = '.. gameState.money, 128, 64)
   -- love.graphics.print(gameState.y, 64, 84)
   -- local i = 0
   -- for k, v in pairs(gameState.aimingObs) do
@@ -282,6 +337,14 @@ function love.draw()
     end
     utils.drawQuad(gameState.data.dollarEnd, dx + (math.min(200, gameState.money) + 1) * utils.ratio, dy)
     -- utils.drawQuad(dollarEnd, dx + (math.ceil(gameState.money / 5) + 1) * utils.ratio, dy)
+  end
+
+  utils.text.draw(gameState.texts.money, utils.worldCoordinates(3, 2))
+  utils.text.draw(gameState.texts.article, utils.worldCoordinates(3, 3))
+  utils.text.draw(gameState.texts.mag, utils.worldCoordinates(3, 4))
+
+  if gameState.state == 'PAUSE' then
+    utils.text.drawTitle(gameState.texts.pause, OX, OY)
   end
 end
 
@@ -326,6 +389,12 @@ function love.keypressed(key)
     gameState.DEBUG_T = 0.9
   elseif key == ')' then
     gameState.DEBUG_T = nil
+  end
+  if key == 'escape' then
+    love.event.quit()
+  elseif key == 'space' then
+    gameState.state = utils.ternary(gameState.state == 'PAUSE', 'RUNNING', 'PAUSE') -- faire une pause de 3 min max comme dans l'emission
+    gameState:setPauseTimer(2 * 60 + 56)
   end
 end
 
