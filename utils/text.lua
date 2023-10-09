@@ -13,23 +13,19 @@ local loadTextUtils = function(utils)
     }
   end
   
-  -- function utils.text.draw(data, x, y)
-  --   utils.getColor()
-  --   love.graphics.setColor(0, 0, 0, 0.3)
-  --   love.graphics.rectangle('fill',
-  --     x - (data.w / 2 + utils.ratio),
-  --     y - (data.h + 3 * utils.ratio) - 29 * utils.ratio,
-  --     data.w + 2 * utils.ratio,
-  --     data.h + 2 * utils.ratio
-  --   )
-  --   -- love.graphics.setColor(0, 0, 0)
-  --   -- love.graphics.rectangle('line', x - (tw / 2 + utils.ratio), y - (th + 3 * utils.ratio) - 29 * utils.ratio, tw + 2 * utils.ratio, th + 2 * utils.ratio)
-  --   love.graphics.setColor(1, 1, 1)
-  --   -- voir si plus performant si on utilise utils.ratio, utils.ratio à la place de 1, 1
-  --   love.graphics.draw(text, x, y - 29 * utils.ratio, 0, 1, 1, data.w / 2, data.h + 3 * utils.ratio)
-  --   love.graphics.circle('fill', x, y, 4)
-  --   utils.setColor(r, g, b, a)
-  -- end
+  function utils.text.drawSpeak(tongue, x, y)
+    utils.getColor()
+    love.graphics.setColor(tongue.background.r, tongue.background.g, tongue.background.b, tongue.background.a)
+    love.graphics.rectangle('fill',
+      x - (tongue.current.w / 8 + 1) * utils.ratio,
+      y - (tongue.current.h / 4 + 3) * utils.ratio - 29 * utils.ratio - (utils.ratio / 2), -- dernier arg pour l'alignement
+      (tongue.current.w / 4 + 2) * utils.ratio,
+      (tongue.current.h / 4 + 2) * utils.ratio
+    )
+    love.graphics.setColor(tongue.color.r, tongue.color.g, tongue.color.b, tongue.color.a)
+    love.graphics.draw(tongue.current.text, x, y - 29 * utils.ratio, 0, utils.ratio / 4, utils.ratio / 4, tongue.current.w / 2, tongue.current.h + 3 * utils.ratio)
+    utils.setColor(r, g, b, a)
+  end
 
   function utils.text.draw(data, x, y)
     love.graphics.draw(data.text, x, y, 0, utils.ratio / 2, utils.ratio / 2, data.ox, data.oy)

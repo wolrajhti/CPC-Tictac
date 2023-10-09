@@ -115,13 +115,10 @@ function utils.updateCells(dt, gameState)
 end
 
 function utils.drawCells(gameState) -- beurk beurk beurk
-  if gameState.cell then
-    utils.getColor()
-  end
   for i, cell in ipairs(utils.orderedCells) do
     for i, agent in ipairs(cell.agents) do
       if agent.behind == false then
-        utils.drawAgent(agent, gameState.data.stress)
+        utils.drawAgent(agent, gameState)
       end
     end
     if #cell.objs > 0 or cell.h ~= 0 then
@@ -140,7 +137,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
     end
     for i, agent in ipairs(cell.agents) do
       if agent.behind then
-        utils.drawAgent(agent, gameState.data.stress)
+        utils.drawAgent(agent, gameState)
       end
     end
     for j, flying in ipairs(cell.flying) do
@@ -152,9 +149,6 @@ function utils.drawCells(gameState) -- beurk beurk beurk
     -- if gameState.cell and gameState.cell.walkable and cell.walkable and gameState.cell.y == cell.y then
     --   love.graphics.print(cell.x - gameState.cell.x..' '..cell.h, utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy))
     -- end
-  end
-  if gameState.cell then
-    utils.setColor()
   end
 end
 
@@ -282,10 +276,20 @@ function utils.copyAnimation(animation)
   }
 end
 
-function utils.initAgent(x, y, animations, stress)
+function utils.initAgent(x, y, tongue, animations, stress)
+  for i = 1, #tongue.texts.work do
+    tongue.texts.work[i] = utils.text.init(tongue.font, tongue.texts.work[i])
+  end
+  for i = 1, #tongue.texts.leaving do
+    tongue.texts.leaving[i] = utils.text.init(tongue.font, tongue.texts.leaving[i])
+  end
+  for i = 1, #tongue.texts.random do
+    tongue.texts.random[i] = utils.text.init(tongue.font, tongue.texts.random[i])
+  end
   local agent = {
     isIvan = false,
     isAckboo = false,
+    tongue = tongue,
     x = x,
     y = y,
     state = 'idle',
@@ -453,15 +457,17 @@ function utils.updateAgent(agent, dt, gameState)
   end
 end
 
-function utils.drawAgent(agent, stress)
+function utils.drawAgent(agent, gameState)
   local sx, sy = utils.worldCoordinates(agent.x, agent.y)
   utils.drawQuad(agent.animations.body[agent.state], sx, sy, agent.reverse)
   utils.drawQuad(agent.animations.head[agent.headState], sx, sy, agent.reverse)
   if agent.isAckboo then
     utils.drawQuad(agent.animations.item[agent.itemState], sx, sy, agent.reverse)
   end
+  agent.tongue.current = agent.tongue.texts.random[1]
+  utils.text.drawSpeak(agent.tongue, sx, sy)
   if agent.stress > 0 then
-    utils.drawQuad(stress[agent.stress], sx, sy)
+    utils.drawQuad(gameState.data.stress[agent.stress], sx, sy)
   end
 end
 

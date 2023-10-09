@@ -5,22 +5,6 @@ local utils = require 'utils'
 local loader = require 'loader'
 local data = loader(utils)
 
-local ivan = utils.initAgent(2, 7, data.ivanAnimations, 0)
-ivan.isIvan = true
-local ackboo = utils.initAgent(6, 20, data.ackbooAnimations)
-ackboo.isAckboo = true
-local izual = utils.initAgent(9, 20, data.izualAnimations)
-local sebum = utils.initAgent(12, 20, data.sebumAnimations)
-local ellen = utils.initAgent(13, 18, data.ellenAnimations)
-
-local W, H = love.graphics.getDimensions()
-local OX, OY = W / 2, H / 2
-
-utils.ratio = 4 -- ternary(W / H < w / h, W / w, H / h)
-utils.cw = 16
-utils.ch = 8
-utils.sy = .5
-
 -- fonts
 local fonts = {
   default = love.graphics.newImageFont('assets/fonts/Resource-Imagefont.png',
@@ -28,11 +12,17 @@ local fonts = {
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0" ..
     "123456789.,!?-+/():;%&`'*#=[]\""
   ),
-  -- ackboo = love.graphics.newFont('assets/fonts/comic-sans-ms/ComicSansMS3.ttf', 6 * utils.ratio),
-  -- izual = love.graphics.newFont('assets/fonts/CT ProLamina.ttf', 9 * utils.ratio),
+  ackboo = love.graphics.newFont('assets/fonts/comic-sans-ms/ComicSansMS3.ttf'), --, 6 * utils.ratio)
+  izual = love.graphics.newFont('assets/fonts/upheaval/upheavtt.ttf', 20 * utils.ratio), --, 6 * utils.ratio)
+  sebum = love.graphics.newFont('assets/fonts/alagard.ttf', 24 * utils.ratio)
+  -- ellen = love.graphics.newFont('assets/fonts/dogica/TTF/dogica.ttf'), --, 6 * utils.ratio)
   -- sebum = love.graphics.newFont('assets/fonts/exmouth/exmouth_.ttf', 8 * utils.ratio),
-  -- ellen = love.graphics.newFont('assets/fonts/mortified_drip/MortifiedDrip.ttf', 7 * utils.ratio)
+  -- ellen = love.graphics.newFont('assets/fonts/mortified_drip/MortifiedDrip.ttf', 7 * utils.ratio),
+  -- ivan = love.graphics.newFont('assets/fonts/CT ProLamina.ttf', 9 * utils.ratio),
 }
+fonts.ivan = fonts.default
+fonts.ellen = fonts.default
+fonts.sebum:setLineHeight(.9)
 
 local texts = {
   start = utils.text.init(fonts.default, "C'est partiiii !"),
@@ -42,31 +32,26 @@ local texts = {
   mag = utils.text.init(fonts.default, ""),
   gameOver = utils.text.init(fonts.default, "GAME OVER"),
   home = utils.text.init(fonts.default, "CPC TicTac / Air Pigiste / Wolrajhti 2023 (Make something horrible 2023)"),
-  -- ackboo = {
-  --   test = {
-  --     utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
-  --   },
-  --   pense = {}
-  -- },
-  -- izual = {
-  --   test = {
-  --     utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
-  --   },
-  --   pense = {}
-  -- },
-  -- sebum = {
-  --   test = {
-  --     utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
-  --   },
-  --   pense = {}
-  -- },
-  -- ellen = {
-  --   test = {
-  --     utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
-  --   },
-  --   pense = {}
-  -- }
 }
+
+local loadTongues = require 'utils.tongues'
+local tongues = loadTongues(fonts)
+
+local ivan = utils.initAgent(2, 7, tongues.ivan, data.ivanAnimations, 0)
+ivan.isIvan = true
+local ackboo = utils.initAgent(6, 20, tongues.ackboo, data.ackbooAnimations)
+ackboo.isAckboo = true
+local izual = utils.initAgent(9, 20, tongues.izual, data.izualAnimations)
+local sebum = utils.initAgent(12, 20, tongues.sebum, data.sebumAnimations)
+local ellen = utils.initAgent(13, 18, tongues.ellen, data.ellenAnimations)
+
+local W, H = love.graphics.getDimensions()
+local OX, OY = W / 2, H / 2
+
+utils.ratio = 4 -- ternary(W / H < w / h, W / w, H / h)
+utils.cw = 16
+utils.ch = 8
+utils.sy = .5
 
 local cell
 local aiming = false
@@ -328,6 +313,10 @@ function love.draw()
   end
 
   utils.drawCalendar(gameState)
+
+  if gameState.state ~= 'IDLE' then
+    utils.text.draw(gameState.texts.article, utils.worldCoordinates(7, 14))
+  end
   -- utils.drawWalkingAreas()
 
   if gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
@@ -357,39 +346,20 @@ function love.draw()
     end
   end
 
-  -- utils.drawText(texts.ackboo.test[1], utils.worldCoordinates(PATH.at(P)))
-  -- utils.drawText(texts.izual.test[1], utils.worldCoordinates(5, 40))
-  -- utils.drawText(texts.sebum.test[1], sx, sy)
-  -- utils.drawText(texts.ellen.test[1], utils.worldCoordinates(15, 40))
   utils.drawImage(gameState.data.foreground, OX, OY)
-
-  utils.getColor()
-  -- love.graphics.setColor(0, 0, 0)
-  love.graphics.print(love.timer.getFPS(), 64, 64) -- TODO A SUPPRIMMMMMMMEEEEER
-  -- love.graphics.print(gameState.y, 64, 84)
-  -- local i = 0
-  -- for k, v in pairs(gameState.aimingObs) do
-  --   love.graphics.print(k..'='..utils.ternary(v, 'true', 'false'), 256, 32 + i * 20)
-  --   i = i + 1
-  -- end
-  -- love.graphics.print(gameState.DEBUG_T, 400, 64)
-
-  utils.setColor()
 
   if gameState.state ~= 'IDLE' then
     if gameState.money > 0 then
       local dx, dy = utils.worldCoordinates(4, 1)
       utils.drawQuad(gameState.data.dollarStart, dx, dy)
-      for i = 0, math.min(200, gameState.money) - 1 do --math.ceil(gameState.money / 5) do
+      for i = 0, math.min(200, gameState.money) - 1 do
         utils.drawQuad(gameState.data.dollarStack[(i - 1 + (gameState.money % #gameState.data.dollarStack)) % #gameState.data.dollarStack + 1], dx + (i + 1) * utils.ratio, dy)
       end
       utils.drawQuad(gameState.data.dollarEnd, dx + (math.min(200, gameState.money) - 1) * utils.ratio, dy)
-      -- utils.drawQuad(dollarEnd, dx + (math.ceil(gameState.money / 5) + 1) * utils.ratio, dy)
     end
 
     utils.text.draw(gameState.texts.money, utils.worldCoordinates(5, 1.5))
     utils.text.draw(gameState.texts.mag, utils.worldCoordinates(5, 2.5))
-    utils.text.draw(gameState.texts.article, utils.worldCoordinates(7, 14))
   end
 
   if gameState.state == 'PAUSE' then
