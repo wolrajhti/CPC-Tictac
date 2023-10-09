@@ -37,7 +37,8 @@ local texts = {
   pause = utils.text.init(fonts.default, ""),
   money = utils.text.init(fonts.default, ""),
   article = utils.text.init(fonts.default, ""),
-  mag = utils.text.init(fonts.default, "")
+  mag = utils.text.init(fonts.default, ""),
+  gameOver = utils.text.init(fonts.default, "GAME OVER")
   -- ackboo = {
   --   test = {
   --     utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
@@ -68,8 +69,17 @@ local cell
 local aiming = false
 
 local gameState = {
-  state = 'RUNNING',
+  state = 'IDLE',
   texts = texts,
+  -- start
+  startTimer = 0,
+  startOffsetY = 0,
+  startOpacity = 1,
+  updateStartTimer = function(self, dt)
+    self.startTimer = math.min(self.startTimer + dt, 3)
+    self.startOffsetY = - self.startTimer / 3 * .5 * OY
+    self.startOpacity = 1 - math.min(self.startTimer, 1.2)
+  end,
   -- pause
   pauseTimer = 2 * 60 + 55,
   updatePauseTimer = function(self, dt)
@@ -86,8 +96,11 @@ local gameState = {
   -- money
   money = 0,
   setMoney = function(self, sum)
-    self.money = sum
-    self.texts.money = utils.text.init(fonts.default, string.format("X %d", sum))
+    self.money = math.max(0, sum)
+    self.texts.money = utils.text.init(fonts.default, string.format("X %d", math.max(0, sum)))
+    if self.money == 0 then
+      self:gameOver()
+    end
   end,
   magCount = 0,
   setMagCount = function(self, count)
@@ -104,6 +117,10 @@ local gameState = {
   setArticleTodoCount = function(self, countTodo)
     self.articleTodoCount = countTodo
     self.texts.article = utils.text.init(fonts.default, string.format("%d / %d", self.articleCount, countTodo))
+  end,
+  -- gameOver
+  gameOver = function(self)
+    self.state = 'GAME_OVER'
   end,
   -- à cleaner
   DEBUG_T = nil,
@@ -141,45 +158,51 @@ local gameState = {
   end,
   update = function(self, dt)
     if self.state ~= 'PAUSE' then
-      self.time = self.time + self.TIME_SPEED * dt
-      while self.time > 1 do
-        self.time = self.time - 1
-        self.day = self.day + 1
-        if self.day > 30 then
-          self.day = self.day - 30
+      if self.state == 'RUNNING' then
+        if self.startTimer < 2 then
+          self:updateStartTimer(dt)
         end
-        self.endOfTheMonth = self.day == 30
-        self.weekend = self.day == 6 or-- self.day == 7 or
-                      self.day == 13 or-- self.day == 14 or
-                      self.day == 20 or-- self.day == 21 or
-                      self.day == 27-- or self.day == 28
-        if self.weekend then
-          for i, agent in ipairs(self.agents) do
-            if i ~= 1 and agent.state ~= 'leaving' then -- ivan (bof bof ...)
-              agent.stress = math.min(math.max(0, agent.stress - 1), 8)
-            end
+        self.time = self.time + self.TIME_SPEED * dt
+        while self.time > 1 do
+          self.time = self.time - 1
+          self.day = self.day + 1
+          if self.day > 30 then
+            self.day = self.day - 30
           end
-        -- end
-        -- if self.endOfTheMonth then
-          self:setArticleCount(0)
-          self:setArticleTodoCount(self.articleTodoCount + 1)
-          self:setMagCount(self.magCount + 1)
-          local needsUpdate = false
-          for i, cell in ipairs(utils.orderedCells) do
-            if cell.redacWalkable and #cell.objs ~= 0 then
-              needsUpdate = needsUpdate or self.cell and cell.y == self.cell.y
-              table.remove(cell.objs, #cell.objs)
-              if cell.waitingFor == nil then -- s'il y a un objet et que waitingFor est nil => c'est un article !
-                cell.h = math.min(cell.h + 1, 10)
-                self:setMoney(self.money + 2)
+          self.endOfTheMonth = self.day == 30
+          self.weekend = self.day == 6 or-- self.day == 7 or
+                        self.day == 13 or-- self.day == 14 or
+                        self.day == 20 or-- self.day == 21 or
+                        self.day == 27-- or self.day == 28
+          if self.weekend then
+            for i, agent in ipairs(self.agents) do
+              if i ~= 1 and agent.state ~= 'leaving' then -- ivan (bof bof ...)
+                agent.stress = math.min(math.max(0, agent.stress - 1), 8)
               end
             end
-          end
-          if needsUpdate then
-            self.aimingObs = utils.heightThreshold(self.cell)
+          -- end
+          -- if self.endOfTheMonth then
+            self:setArticleCount(0)
+            self:setArticleTodoCount(self.articleTodoCount + 1)
+            self:setMagCount(self.magCount + 1)
+            local needsUpdate = false
+            for i, cell in ipairs(utils.orderedCells) do
+              if cell.redacWalkable and #cell.objs ~= 0 then
+                needsUpdate = needsUpdate or self.cell and cell.y == self.cell.y
+                table.remove(cell.objs, #cell.objs)
+                if cell.waitingFor == nil then -- s'il y a un objet et que waitingFor est nil => c'est un article !
+                  cell.h = math.min(cell.h + 1, 10)
+                  self:setMoney(self.money + 2)
+                end
+              end
+            end
+            if needsUpdate then
+              self.aimingObs = utils.heightThreshold(self.cell)
+            end
           end
         end
       end
+
       if self.aiming then
         self.t = self.DEBUG_T or (self.t + self.aimingSpeed * dt)
         local u = self.t % 2
@@ -193,17 +216,21 @@ local gameState = {
           self:throw()
         end
       end
+
       for i = #self.agents, 1, -1 do
         self.agents[i]:update(dt, self)
         if self.agents[i].state == 'leaving' and self.agents[i].t == 1 then
           utils.remove(self.agents[i].to.agents, self.agents[i])
           table.remove(self.agents, i)
+          if #self.agents == 0 then
+            self:gameOver()
+          end
         end
       end
 
       self.data.logos:update(dt)
       self.data.waves:update(dt)
-      self.data.clouds:update(dt)
+      -- self.data.clouds:update(dt)
 
       utils.updateCells(dt, self)
     else
@@ -211,7 +238,7 @@ local gameState = {
     end
   end,
   aim = function(self)
-    if ivan.state == 'idle' and self.cell.redacWalkable then
+    if ivan.state == 'idle' and self.cell.redacWalkable and self.state ~= 'GAME_OVER' then
       self.aiming = true
       ivan.state = 'aiming'
       ivan.reverse = false
@@ -221,6 +248,9 @@ local gameState = {
     end
   end,
   throw = function(self)
+    if self.state == 'IDLE' then
+      self.state = 'RUNNING'
+    end
     self.aimingObs = utils.heightThreshold(self.cell)
     ivan.state = 'idle'
     local h = - utils.round(self.offset) -- entre 0 et 10
@@ -256,7 +286,7 @@ local gameState = {
   end
 }
 
-gameState:setMoney(50)
+gameState:setMoney(10)
 gameState:setArticleCount(0)
 gameState:setArticleTodoCount(5)
 gameState:setMagCount(0)
@@ -275,7 +305,7 @@ function love.draw()
   utils.drawImage(gameState.data.background, OX, OY)
   utils.drawQuad(gameState.data.logos, OX, OY)
   utils.drawQuad(gameState.data.waves, OX, OY)
-  utils.drawQuad(gameState.data.clouds, OX, OY)
+  -- utils.drawQuad(gameState.data.clouds, OX, OY)
 
   if #gameState.door.cell.agents ~= 0 then
     utils.drawImage(gameState.data.door, OX, OY)
@@ -284,13 +314,13 @@ function love.draw()
   utils.drawCalendar(gameState)
   -- utils.drawWalkingAreas()
 
-  if gameState.cell and gameState.cell.redacWalkable then
+  if gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
     utils.drawLine(utils.lineAt(gameState.cell.y))
   end
 
   utils.drawCells(gameState)
 
-  if gameState.cell and gameState.cell.redacWalkable then
+  if gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
     utils.drawQuad(gameState.data.cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
     utils.drawQuad(gameState.data.ruler, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
     love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
@@ -345,6 +375,13 @@ function love.draw()
 
   if gameState.state == 'PAUSE' then
     utils.text.drawTitle(gameState.texts.pause, OX, OY)
+  elseif gameState.state == 'RUNNING' then
+    if gameState.startTimer < 3 then
+      love.graphics.setColor(1, 1, 1, gameState.startOpacity)
+      utils.text.drawTitle(gameState.texts.start, OX, OY + gameState.startOffsetY)
+    end
+  elseif gameState.state == 'GAME_OVER' then
+    utils.text.drawTitle(gameState.texts.gameOver, OX, OY)
   end
 end
 

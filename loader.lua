@@ -17,19 +17,19 @@ local function loader(utils)
   table.insert(wavesFrames, wavesFrames[2])
   data.waves = utils.initAnimation(wavesFrames, .01)
 
-  local cloudsFrames = {
-    love.graphics.newImage('assets/sprites/clouds/clouds1.png'),
-    love.graphics.newImage('assets/sprites/clouds/clouds2.png'),
-    love.graphics.newImage('assets/sprites/clouds/clouds3.png'),
-    love.graphics.newImage('assets/sprites/clouds/clouds4.png'),
-    love.graphics.newImage('assets/sprites/clouds/clouds5.png'),
-    love.graphics.newImage('assets/sprites/clouds/clouds6.png')
-  }
-  table.insert(cloudsFrames, cloudsFrames[5])
-  table.insert(cloudsFrames, cloudsFrames[4])
-  table.insert(cloudsFrames, cloudsFrames[3])
-  table.insert(cloudsFrames, cloudsFrames[2])
-  data.clouds = utils.initAnimation(cloudsFrames, .02)
+  -- local cloudsFrames = {
+  --   love.graphics.newImage('assets/sprites/clouds/clouds1.png'),
+  --   love.graphics.newImage('assets/sprites/clouds/clouds2.png'),
+  --   love.graphics.newImage('assets/sprites/clouds/clouds3.png'),
+  --   love.graphics.newImage('assets/sprites/clouds/clouds4.png'),
+  --   love.graphics.newImage('assets/sprites/clouds/clouds5.png'),
+  --   love.graphics.newImage('assets/sprites/clouds/clouds6.png')
+  -- }
+  -- table.insert(cloudsFrames, cloudsFrames[5])
+  -- table.insert(cloudsFrames, cloudsFrames[4])
+  -- table.insert(cloudsFrames, cloudsFrames[3])
+  -- table.insert(cloudsFrames, cloudsFrames[2])
+  -- data.clouds = utils.initAnimation(cloudsFrames, .02)
 
   local logosFrames = {
     love.graphics.newImage('assets/sprites/logos/logos1.png'),
@@ -39,7 +39,7 @@ local function loader(utils)
     love.graphics.newImage('assets/sprites/logos/logos5.png'),
     love.graphics.newImage('assets/sprites/logos/logos6.png')
   }
-  data.logos = utils.initAnimation(logosFrames, .1)
+  data.logos = utils.initAnimation(logosFrames, .2)
 
   data.foreground = utils.initImage('assets/sprites/foreground.png')
 

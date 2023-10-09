@@ -124,7 +124,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
       end
     end
     if #cell.objs > 0 or cell.h ~= 0 then
-      if gameState.cell and gameState.cell.redacWalkable and gameState.cell.y < cell.y then
+      if gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' and gameState.cell.y < cell.y then
         love.graphics.setColor(r, g, b, .2)
       end
       if cell.h ~= 0 and cell.redacWalkable then
