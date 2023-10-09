@@ -183,19 +183,19 @@ local gameState = {
                 agent.stress = math.min(math.max(0, agent.stress - 1), 8)
               end
             end
-          -- end
-          -- if self.endOfTheMonth then
+          end
+          if self.endOfTheMonth then
             self:setArticleCount(0)
             self:setArticleTodoCount(self.articleTodoCount + 1)
             self:setMagCount(self.magCount + 1)
+            local candidates = {}
             local needsUpdate = false
             for i, cell in ipairs(utils.orderedCells) do
               if cell.redacWalkable and #cell.objs ~= 0 then
                 needsUpdate = needsUpdate or self.cell and cell.y == self.cell.y
                 local p = table.remove(cell.objs, #cell.objs)
                 if cell.waitingFor == nil then -- s'il y a un objet et que waitingFor est nil => c'est un article !
-                  cell.h = math.min(cell.h + 1, 10)
-                  self:setMoney(self.money + 2)
+                  table.insert(candidates, cell)
                 else
                   p.exploding = false
                   p.update = utils.updatePlane
@@ -203,6 +203,12 @@ local gameState = {
                   p.animations.exploding.t = 0
                   table.insert(cell.missed, p)
                 end
+              end
+            end
+            if #candidates >= self.articleTodoCount then
+              for i, cell in ipairs(candidates) do
+                cell.h = math.min(cell.h + 1, 10)
+                self:setMoney(self.money + 2)
               end
             end
             if needsUpdate then
