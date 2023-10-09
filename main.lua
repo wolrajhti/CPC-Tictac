@@ -6,6 +6,7 @@ local loader = require 'loader'
 local data = loader(utils)
 
 local ivan = utils.initAgent(2, 7, data.ivanAnimations, 0)
+ivan.isIvan = true
 local ackboo = utils.initAgent(6, 20, data.ackbooAnimations)
 local izual = utils.initAgent(9, 20, data.izualAnimations)
 local sebum = utils.initAgent(12, 20, data.sebumAnimations)
@@ -238,7 +239,7 @@ local gameState = {
     end
   end,
   aim = function(self)
-    if ivan.state == 'idle' and self.cell.redacWalkable and self.state ~= 'GAME_OVER' then
+    if ivan.state ~= 'walking' and self.cell.redacWalkable and self.state ~= 'GAME_OVER' then
       self.aiming = true
       ivan.state = 'aiming'
       ivan.reverse = false
@@ -320,7 +321,7 @@ function love.draw()
 
   utils.drawCells(gameState)
 
-  if gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
+  if ivan.state ~= 'walking' and gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
     utils.drawQuad(gameState.data.cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
     utils.drawQuad(gameState.data.ruler, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
     love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)

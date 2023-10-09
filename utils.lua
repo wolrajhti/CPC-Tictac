@@ -283,6 +283,7 @@ end
 
 function utils.initAgent(x, y, animations, stress)
   local agent = {
+    isIvan = false,
     x = x,
     y = y,
     state = 'idle',
@@ -379,7 +380,7 @@ function utils.updateAgent(agent, dt, gameState)
     if agent.stress > 7 then
       agent.state = 'leaving'
       agent:goTo(gameState.door.cell, gameState.door.ox)
-    elseif love.math.random() < .5 * dt then
+    elseif love.math.random() < .5 * dt and (gameState.state ~= 'IDLE' or not agent.isIvan) then
       local candidates = {}
       local next
       next = utils.cellAt(agent.x - 1, agent.y)
@@ -520,7 +521,7 @@ function utils.drawCalendar(gameState)
 end
 
 local N = {-1, -1, 0, -1, 1, -1, 1, 0, 1, 1, 0, 1, -1, 1, -1, 0}
-local MAX_DIST = 4 * math.sqrt(2) -- TODO à réduire en fonction du temps qui passe -> plus de mag -> moins de perception
+local MAX_DIST = 2 * math.sqrt(2) -- TODO à réduire en fonction du temps qui passe -> plus de mag -> moins de perception
 function utils.findNearest(agents, cell)
   local candidates = {}
   local neighbor
