@@ -11,7 +11,7 @@ local ackboo = utils.initAgent(6, 20, data.ackbooAnimations)
 ackboo.isAckboo = true
 local izual = utils.initAgent(9, 20, data.izualAnimations)
 local sebum = utils.initAgent(12, 20, data.sebumAnimations)
-local ellen = utils.initAgent(15, 20, data.ellenAnimations)
+local ellen = utils.initAgent(13, 18, data.ellenAnimations)
 
 local W, H = love.graphics.getDimensions()
 local OX, OY = W / 2, H / 2
@@ -365,7 +365,7 @@ function love.draw()
 
   utils.getColor()
   -- love.graphics.setColor(0, 0, 0)
-  love.graphics.print(love.timer.getFPS(), 64, 64)
+  love.graphics.print(love.timer.getFPS(), 64, 64) -- TODO A SUPPRIMMMMMMMEEEEER
   -- love.graphics.print(gameState.y, 64, 84)
   -- local i = 0
   -- for k, v in pairs(gameState.aimingObs) do

@@ -89,7 +89,6 @@ end
 
 function utils.updateCells(dt, gameState)
   local candidates = {}
-  local nearest
   for i, cell in ipairs(utils.orderedCells) do
     for i = #cell.flying, 1, -1 do
       cell.flying[i]:update(dt)
@@ -389,25 +388,26 @@ function utils.updateAgent(agent, dt, gameState)
     if agent.stress > 7 then
       agent.state = 'leaving'
       agent.headState = 'cry'
-      nearest.agent.animations.head.cry.t = 0
+      agent.animations.head.cry.t = 0
       agent:goTo(gameState.door.cell, gameState.door.ox)
     elseif love.math.random() < .5 * dt and (gameState.state ~= 'IDLE' or not agent.isIvan) then
       local candidates = {}
+      local origin = utils.cellAt(agent.x, agent.y)
       local next
       next = utils.cellAt(agent.x - 1, agent.y)
-      if next.walkable and next:isEmpty() and agent.from ~= next then
+      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       next = utils.cellAt(agent.x, agent.y - 1)
-      if next.walkable and next:isEmpty() and agent.from ~= next then
+      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       next = utils.cellAt(agent.x + 1, agent.y)
-      if next.walkable and next:isEmpty() and agent.from ~= next then
+      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       next = utils.cellAt(agent.x, agent.y + 1)
-      if next.walkable and next:isEmpty() and agent.from ~= next then
+      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       if #candidates > 0 then
@@ -455,7 +455,6 @@ end
 
 function utils.drawAgent(agent, stress)
   local sx, sy = utils.worldCoordinates(agent.x, agent.y)
-  print(agent.state, agent.headState, agent.itemState)
   utils.drawQuad(agent.animations.body[agent.state], sx, sy, agent.reverse)
   utils.drawQuad(agent.animations.head[agent.headState], sx, sy, agent.reverse)
   if agent.isAckboo then
