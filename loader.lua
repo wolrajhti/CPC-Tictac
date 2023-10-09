@@ -51,9 +51,8 @@ local function loader(utils)
     love.graphics.newImage('assets/sprites/aim_system3.png'),
     love.graphics.newImage('assets/sprites/aim_system4.png')
   }
-  data.dollarStart = utils.initQuad(textures[1], 49, 34, 3, 13)
+  data.dollarStart = utils.initQuad(textures[1], 52, 34, 3, 13)
   data.dollarStack = {
-    utils.initQuad(textures[1], 52, 34, 3, 13),
     utils.initQuad(textures[1], 55, 34, 3, 13),
     utils.initQuad(textures[1], 58, 34, 3, 13),
     utils.initQuad(textures[1], 61, 34, 3, 13),

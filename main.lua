@@ -97,7 +97,7 @@ local gameState = {
   money = 0,
   setMoney = function(self, sum)
     self.money = math.max(0, sum)
-    self.texts.money = utils.text.init(fonts.default, string.format("X %d", math.max(0, sum)))
+    self.texts.money = utils.text.init(fonts.default, string.format("x%d", math.max(0, sum)), 0)
     if self.money == 0 then
       self:gameOver()
     end
@@ -105,18 +105,18 @@ local gameState = {
   magCount = 0,
   setMagCount = function(self, count)
     self.magCount = count
-    self.texts.mag = utils.text.init(fonts.default, string.format("n°%03d", count))
+    self.texts.mag = utils.text.init(fonts.default, string.format("numero %03d", count), 0)
   end,
   -- article
   articleCount = 0,
   articleTodoCount = 10,
   setArticleCount = function(self, count)
     self.articleCount = count
-    self.texts.article = utils.text.init(fonts.default, string.format("%d / %d", count, self.articleTodoCount))
+    self.texts.article = utils.text.init(fonts.default, string.format("%d/%d", count, self.articleTodoCount))
   end,
   setArticleTodoCount = function(self, countTodo)
     self.articleTodoCount = countTodo
-    self.texts.article = utils.text.init(fonts.default, string.format("%d / %d", self.articleCount, countTodo))
+    self.texts.article = utils.text.init(fonts.default, string.format("%d/%d", self.articleCount, countTodo))
   end,
   -- gameOver
   gameOver = function(self)
@@ -286,7 +286,7 @@ local gameState = {
   end
 }
 
-gameState:setMoney(10)
+gameState:setMoney(50)
 gameState:setArticleCount(0)
 gameState:setArticleTodoCount(5)
 gameState:setMagCount(0)
@@ -359,19 +359,18 @@ function love.draw()
   utils.setColor()
 
   if gameState.money > 0 then
-    local dx, dy = utils.worldCoordinates(2.5, 1)
+    local dx, dy = utils.worldCoordinates(4, 1)
     utils.drawQuad(gameState.data.dollarStart, dx, dy)
-    for i = 0, math.min(200, gameState.money) do --math.ceil(gameState.money / 5) do
-    -- for i = 0, math.ceil(gameState.money / 5) do
-      utils.drawQuad(gameState.data.dollarStack[i % #gameState.data.dollarStack + 1], dx + (i + 1) * utils.ratio, dy)
+    for i = 0, math.min(200, gameState.money) - 1 do --math.ceil(gameState.money / 5) do
+      utils.drawQuad(gameState.data.dollarStack[(i - 1 + (gameState.money % #gameState.data.dollarStack)) % #gameState.data.dollarStack + 1], dx + (i + 1) * utils.ratio, dy)
     end
-    utils.drawQuad(gameState.data.dollarEnd, dx + (math.min(200, gameState.money) + 1) * utils.ratio, dy)
+    utils.drawQuad(gameState.data.dollarEnd, dx + (math.min(200, gameState.money) - 1) * utils.ratio, dy)
     -- utils.drawQuad(dollarEnd, dx + (math.ceil(gameState.money / 5) + 1) * utils.ratio, dy)
   end
 
-  utils.text.draw(gameState.texts.money, utils.worldCoordinates(3, 2))
-  utils.text.draw(gameState.texts.article, utils.worldCoordinates(3, 3))
-  utils.text.draw(gameState.texts.mag, utils.worldCoordinates(3, 4))
+  utils.text.draw(gameState.texts.money, utils.worldCoordinates(5, 1.5))
+  utils.text.draw(gameState.texts.mag, utils.worldCoordinates(5, 2.5))
+  utils.text.draw(gameState.texts.article, utils.worldCoordinates(7, 14))
 
   if gameState.state == 'PAUSE' then
     utils.text.drawTitle(gameState.texts.pause, OX, OY)

@@ -34,6 +34,10 @@ local loadTextUtils = function(utils)
   function utils.text.draw(data, x, y)
     love.graphics.draw(data.text, x, y, 0, utils.ratio / 2, utils.ratio / 2, data.ox, data.oy)
   end
+
+  function utils.text.drawSmall(data, x, y)
+    love.graphics.draw(data.text, x, y, 0, utils.ratio / 4, utils.ratio / 4, data.ox, data.oy)
+  end
   
   function utils.text.drawTitle(data, x, y)
     love.graphics.draw(data.text, x, y, 0, utils.ratio, utils.ratio, data.ox, data.oy)
