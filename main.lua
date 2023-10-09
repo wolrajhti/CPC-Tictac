@@ -8,6 +8,7 @@ local data = loader(utils)
 local ivan = utils.initAgent(2, 7, data.ivanAnimations, 0)
 ivan.isIvan = true
 local ackboo = utils.initAgent(6, 20, data.ackbooAnimations)
+ackboo.isAckboo = true
 local izual = utils.initAgent(9, 20, data.izualAnimations)
 local sebum = utils.initAgent(12, 20, data.sebumAnimations)
 local ellen = utils.initAgent(15, 20, data.ellenAnimations)
@@ -301,7 +302,7 @@ local gameState = {
   end
 }
 
-gameState:setMoney(20)
+gameState:setMoney(100)
 gameState:setArticleCount(0)
 gameState:setArticleTodoCount(5)
 gameState:setMagCount(0)

@@ -76,9 +76,11 @@ function utils.sortCells()
 end
 
 function utils.alert(cell, agents)
-  nearest = utils.findNearest(agents, cell)
+  local nearest = utils.findNearest(agents, cell)
   if nearest then
     nearest.agent.state = 'goingToWork'
+    nearest.agent.headState = 'surprise'
+    nearest.agent.animations.head.surprise.t = 0
     nearest.agent.target = cell
     cell.waitingFor = nearest.agent -- le rédacteur va vers la cellule
     nearest.agent:goTo(nearest.neighbor)
@@ -284,9 +286,12 @@ end
 function utils.initAgent(x, y, animations, stress)
   local agent = {
     isIvan = false,
+    isAckboo = false,
     x = x,
     y = y,
     state = 'idle',
+    headState = 'idle',
+    itemState = 'idle',
     reverse = love.math.random() < .5,
     behind = false,
     t = 0,
@@ -375,10 +380,16 @@ function utils.goTo(self, cell, ox, oy)
 end
 
 function utils.updateAgent(agent, dt, gameState)
-  agent.animations[agent.state]:update(dt)
+  agent.animations.body[agent.state]:update(dt)
+  agent.animations.head[agent.headState]:update(dt)
+  if agent.isAckboo then
+    agent.animations.item[agent.itemState]:update(dt)
+  end
   if agent.state == 'idle' then
     if agent.stress > 7 then
       agent.state = 'leaving'
+      agent.headState = 'cry'
+      nearest.agent.animations.head.cry.t = 0
       agent:goTo(gameState.door.cell, gameState.door.ox)
     elseif love.math.random() < .5 * dt and (gameState.state ~= 'IDLE' or not agent.isIvan) then
       local candidates = {}
@@ -403,9 +414,6 @@ function utils.updateAgent(agent, dt, gameState)
         agent.state = 'walking'
         agent:goTo(candidates[love.math.random(1, #candidates)])
       end
-    elseif love.math.random() < .1 * dt then
-      agent.state = 'blink'
-      agent.t = 0
     end
   elseif agent.state == 'walking' then
     agent.t = agent.path.update(agent.t, dt)
@@ -416,11 +424,6 @@ function utils.updateAgent(agent, dt, gameState)
   elseif agent.state == 'leaving' then
     agent.t = agent.path.update(agent.t, dt)
     agent.x, agent.y = agent.path.at(agent.t)
-  elseif agent.state == 'blink' then
-    agent.t = agent.t + dt
-    if agent.t > 1 then
-      agent.state = 'idle'
-    end
   elseif agent.state == 'goingToWork' then -- faire un 'nextState' ou 'todoList'
     agent.t = agent.path.update(agent.t, dt)
     agent.x, agent.y = agent.path.at(agent.t)
@@ -437,11 +440,27 @@ function utils.updateAgent(agent, dt, gameState)
     agent.stress = math.min(agent.stress + 1, 8)
     agent.state = 'idle'
   end
+  if agent.headState == 'idle' then
+    if love.math.random() < .1 * dt then
+      agent.headState = 'blink'
+      agent.animations.head.blink.t = 0
+    end
+  elseif agent.headState ~= 'cry' then
+    if agent.animations.head[agent.headState].t == 1 then
+      agent.headState = 'idle'
+      agent.animations.head.blink.t = 0
+    end
+  end
 end
 
 function utils.drawAgent(agent, stress)
   local sx, sy = utils.worldCoordinates(agent.x, agent.y)
-  utils.drawQuad(agent.animations[agent.state], sx, sy, agent.reverse)
+  print(agent.state, agent.headState, agent.itemState)
+  utils.drawQuad(agent.animations.body[agent.state], sx, sy, agent.reverse)
+  utils.drawQuad(agent.animations.head[agent.headState], sx, sy, agent.reverse)
+  if agent.isAckboo then
+    utils.drawQuad(agent.animations.item[agent.itemState], sx, sy, agent.reverse)
+  end
   if agent.stress > 0 then
     utils.drawQuad(stress[agent.stress], sx, sy)
   end

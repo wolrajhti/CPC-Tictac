@@ -108,79 +108,112 @@ local function loader(utils)
     -- utils.initQuad(bookTexture, 111, 1, 11, 86, nil, 83) -- 10
   }
 
-  local characters = {
-    love.graphics.newImage('assets/sprites/cpc_assets1.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets2.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets3.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets4.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets5.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets6.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets7.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets8.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets9.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets10.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets11.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets12.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets13.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets14.png'),
-    love.graphics.newImage('assets/sprites/cpc_assets15.png'),
+  local bodies = {
+    love.graphics.newImage('assets/sprites/bodies/bodies1.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies2.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies3.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies4.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies5.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies6.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies7.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies8.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies9.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies10.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies11.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies12.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies13.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies14.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies15.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies16.png'),
+    love.graphics.newImage('assets/sprites/bodies/bodies17.png'),
   }
 
-  local idleFrames = utils.slice(characters, 2)
-  local blinkFrames = utils.slice(characters, 1, 2)
-  local walkingFrames = utils.slice(characters, 10, 11)
-  local aimingFrames = utils.slice(characters, 13)
-
-  local ivanWalking = utils.initAnimation(walkingFrames, 2, 0, 0, 21, 31, nil, 28)
-  data.ivanAnimations = {
-    idle = utils.initAnimation(idleFrames, 2, 0, 0, 21, 31, nil, 28),
-    blink = utils.initAnimation(blinkFrames, 2, 0, 0, 21, 31, nil, 28),
-    walking = ivanWalking,
-    leaving = ivanWalking,
-    goingToWork = ivanWalking,
-    work = ivanWalking,
-    aiming = utils.initAnimation(aimingFrames, 2, 0, 0, 21, 31, nil, 28)
+  local heads = {
+    love.graphics.newImage('assets/sprites/heads/heads1.png'),
+    love.graphics.newImage('assets/sprites/heads/heads2.png'),
+    love.graphics.newImage('assets/sprites/heads/heads3.png'),
+    love.graphics.newImage('assets/sprites/heads/heads4.png'),
+    love.graphics.newImage('assets/sprites/heads/heads5.png'),
+    love.graphics.newImage('assets/sprites/heads/heads6.png'),
+    love.graphics.newImage('assets/sprites/heads/heads7.png'),
+    love.graphics.newImage('assets/sprites/heads/heads8.png'),
+    love.graphics.newImage('assets/sprites/heads/heads9.png'),
+    love.graphics.newImage('assets/sprites/heads/heads10.png'),
+    love.graphics.newImage('assets/sprites/heads/heads11.png'),
+    love.graphics.newImage('assets/sprites/heads/heads12.png'),
+    love.graphics.newImage('assets/sprites/heads/heads13.png'),
+    love.graphics.newImage('assets/sprites/heads/heads14.png'),
+    love.graphics.newImage('assets/sprites/heads/heads15.png'),
+    love.graphics.newImage('assets/sprites/heads/heads16.png'),
+    love.graphics.newImage('assets/sprites/heads/heads17.png'),
   }
 
-  local ackbooWalking = utils.initAnimation(walkingFrames, 2, 20, 2, 17, 29, nil, 28)
-  data.ackbooAnimations = {
-    idle = utils.initAnimation(idleFrames, 2, 20, 2, 17, 29, nil, 28),
-    blink = utils.initAnimation(blinkFrames, 2, 20, 2, 17, 29, nil, 28),
-    walking = ackbooWalking,
-    leaving = ackbooWalking,
-    goingToWork = ackbooWalking,
-    work = ackbooWalking
+  local items = {
+    love.graphics.newImage('assets/sprites/items/items1.png'),
+    love.graphics.newImage('assets/sprites/items/items2.png'),
+    love.graphics.newImage('assets/sprites/items/items3.png'),
+    love.graphics.newImage('assets/sprites/items/items4.png'),
+    love.graphics.newImage('assets/sprites/items/items5.png'),
+    love.graphics.newImage('assets/sprites/items/items6.png'),
+    love.graphics.newImage('assets/sprites/items/items7.png'),
+    love.graphics.newImage('assets/sprites/items/items8.png'),
+    love.graphics.newImage('assets/sprites/items/items9.png'),
+    love.graphics.newImage('assets/sprites/items/items10.png'),
+    love.graphics.newImage('assets/sprites/items/items11.png'),
+    love.graphics.newImage('assets/sprites/items/items12.png'),
+    love.graphics.newImage('assets/sprites/items/items13.png'),
+    love.graphics.newImage('assets/sprites/items/items14.png'),
+    love.graphics.newImage('assets/sprites/items/items15.png'),
+    love.graphics.newImage('assets/sprites/items/items16.png'),
+    love.graphics.newImage('assets/sprites/items/items17.png'),
   }
 
-  local izualWalking = utils.initAnimation(walkingFrames, 2, 37, 2, 17, 29, nil, 28)
-  data.izualAnimations = {
-    idle = utils.initAnimation(idleFrames, 2, 37, 2, 17, 29, nil, 28),
-    blink = utils.initAnimation(blinkFrames, 2, 37, 2, 17, 29, nil, 28),
-    walking = izualWalking,
-    leaving = izualWalking,
-    goingToWork = izualWalking,
-    work = izualWalking
+  local frames = {
+    body = {
+      idle = utils.slice(bodies, 2),
+      walking = utils.slice(bodies, 12, 13),
+      aiming = utils.slice(bodies, 15)
+    },
+    head = {
+      idle = utils.slice(heads, 2),
+      blink = utils.slice(heads, 1, 2),
+      cry = utils.slice(heads, 4),
+      surprise = utils.slice(heads, 5, 6)
+    },
+    item = {
+      idle = utils.slice(items, 9, 10)
+    }
   }
 
-  local sebumWalking = utils.initAnimation(walkingFrames, 2, 53, 2, 18, 29, nil, 28)
-  data.sebumAnimations = {
-    idle = utils.initAnimation(idleFrames, 2, 53, 2, 18, 29, nil, 28),
-    blink = utils.initAnimation(blinkFrames, 2, 53, 2, 18, 29, nil, 28),
-    walking = sebumWalking,
-    leaving = sebumWalking,
-    goingToWork = sebumWalking,
-    work = sebumWalking
-  }
+  local function helper(speed, x, y, w, h, ox, oy)
+    local a = {
+      body = {
+        idle = utils.initAnimation(frames.body.idle, speed, x, y, w, h, ox, oy),
+        walking = utils.initAnimation(frames.body.walking, speed, x, y, w, h, ox, oy),
+        aiming = utils.initAnimation(frames.body.aiming, speed, x, y, w, h, ox, oy)
+      },
+      head = {
+        idle = utils.initAnimation(frames.head.idle, speed, x, y, w, h, ox, oy),
+        blink = utils.initAnimation(frames.head.blink, speed, x, y, w, h, ox, oy, true),
+        cry = utils.initAnimation(frames.head.cry, speed, x, y, w, h, ox, oy),
+        surprise = utils.initAnimation(frames.head.surprise, speed, x, y, w, h, ox, oy, true),
+      },
+      item = {
+        idle = utils.initAnimation(frames.item.idle, speed, x, y, w, h, ox, oy)
+      }
+    }
+    a.body.goingToWork = a.body.walking
+    a.body.work = a.body.walking
+    a.body.leaving = a.body.walking
+    return a
+  end
 
-  local ellenWalking = utils.initAnimation(walkingFrames, 2, 72, 2, 15, 29, nil, 28)
-  data.ellenAnimations = {
-    idle = utils.initAnimation(idleFrames, 2, 72, 2, 15, 29, nil, 28),
-    blink = utils.initAnimation(blinkFrames, 2, 72, 2, 15, 29, nil, 28),
-    walking = ellenWalking,
-    leaving = ellenWalking,
-    goingToWork = ellenWalking,
-    work = ellenWalking
-  }
+  data.ivanAnimations = helper(2, 0, 0, 21, 31, nil, 28)
+  data.ackbooAnimations = helper(2, 20, 2, 17, 29, nil, 28)
+  data.ackbooAnimations.item.idle.speed = 10 -- GROS HACK
+  data.izualAnimations = helper(2, 37, 2, 17, 29, nil, 28)
+  data.sebumAnimations = helper(2, 53, 2, 18, 29, nil, 28)
+  data.ellenAnimations = helper(2, 72, 2, 15, 29, nil, 28)
 
   data.exploding = utils.initAnimation(textures, 3, 15, 32, 18, 15, 9, 11, true)
 
