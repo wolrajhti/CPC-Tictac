@@ -1,3 +1,29 @@
+local function updateTongue(self, dt) -- body state
+  self.t = self.t + dt
+  if self.t > 3 then
+    self.current = nil
+  end
+end
+
+local function work(self)
+  if not self.current then
+    self.current = self.texts.work[love.math.random(1, #self.texts.work)]
+    self.t = 0
+  end
+end
+
+local function leaving(self)
+  self.current = self.texts.leaving[love.math.random(1, #self.texts.leaving)]
+  self.t = 0
+end
+
+local function random(self)
+  if not self.current then
+    self.current = self.texts.random[love.math.random(1, #self.texts.random)]
+    self.t = 0
+  end
+end
+
 local loadTongues = function(fonts)
   return {
     ivan = {
@@ -22,7 +48,11 @@ local loadTongues = function(fonts)
           "RAND 2",
           "RAND 3",
         }
-      }
+      },
+      update = updateTongue,
+      work = work,
+      leaving = leaving,
+      random = random
     },
     ackboo = {
       font = fonts.ackboo,
@@ -46,7 +76,11 @@ local loadTongues = function(fonts)
           "RAND 2",
           "RAND 3",
         }
-      }
+      },
+      update = updateTongue,
+      work = work,
+      leaving = leaving,
+      random = random
     },
     izual = {
       font = fonts.izual,
@@ -70,7 +104,11 @@ local loadTongues = function(fonts)
           "RAND 2",
           "RAND 3",
         }
-      }
+      },
+      update = updateTongue,
+      work = work,
+      leaving = leaving,
+      random = random
     },
     sebum = {
       font = fonts.sebum,
@@ -94,7 +132,11 @@ local loadTongues = function(fonts)
           "RAND 2",
           "RAND 3",
         }
-      }
+      },
+      update = updateTongue,
+      work = work,
+      leaving = leaving,
+      random = random
     },
     ellen = {
       font = fonts.ellen,
@@ -118,7 +160,11 @@ local loadTongues = function(fonts)
           "RAND 2",
           "RAND 3",
         }
-      }
+      },
+      update = updateTongue,
+      work = work,
+      leaving = leaving,
+      random = random
     }
   }
 end

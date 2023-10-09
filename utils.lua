@@ -388,10 +388,17 @@ function utils.updateAgent(agent, dt, gameState)
   if agent.isAckboo then
     agent.animations.item[agent.itemState]:update(dt)
   end
+
+  if agent.tongue.current then
+    agent.tongue:update(dt, agent.state)
+  end
+
+  -- body
   if agent.state == 'idle' then
     if agent.stress > 7 then
       agent.state = 'leaving'
       agent.headState = 'cry'
+      agent.tongue:leaving()
       agent.animations.head.cry.t = 0
       agent:goTo(gameState.door.cell, gameState.door.ox)
     elseif love.math.random() < .5 * dt and (gameState.state ~= 'IDLE' or not agent.isIvan) then
@@ -443,11 +450,16 @@ function utils.updateAgent(agent, dt, gameState)
     agent.target = nil
     agent.stress = math.min(agent.stress + 1, 8)
     agent.state = 'idle'
+    agent.tongue:work()
   end
+
+  -- head
   if agent.headState == 'idle' then
     if love.math.random() < .1 * dt then
       agent.headState = 'blink'
       agent.animations.head.blink.t = 0
+    elseif love.math.random() < .1 * dt then
+      agent.tongue:random()
     end
   elseif agent.headState ~= 'cry' then
     if agent.animations.head[agent.headState].t == 1 then
@@ -464,8 +476,9 @@ function utils.drawAgent(agent, gameState)
   if agent.isAckboo then
     utils.drawQuad(agent.animations.item[agent.itemState], sx, sy, agent.reverse)
   end
-  agent.tongue.current = agent.tongue.texts.random[1]
-  utils.text.drawSpeak(agent.tongue, sx, sy)
+  if agent.tongue.current then
+    utils.text.drawSpeak(agent.tongue, sx, sy)
+  end
   if agent.stress > 0 then
     utils.drawQuad(gameState.data.stress[agent.stress], sx, sy)
   end

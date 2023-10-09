@@ -5,6 +5,7 @@ local loadTextUtils = function(utils)
     text = love.graphics.newText(font, str)
     local w, h = text:getDimensions()
     return {
+      len = #str,
       text = text,
       w = w,
       h = h,
