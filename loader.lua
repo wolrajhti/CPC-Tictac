@@ -17,20 +17,6 @@ local function loader(utils)
   table.insert(wavesFrames, wavesFrames[2])
   data.waves = utils.initAnimation(wavesFrames, .01)
 
-  -- local cloudsFrames = {
-  --   love.graphics.newImage('assets/sprites/clouds/clouds1.png'),
-  --   love.graphics.newImage('assets/sprites/clouds/clouds2.png'),
-  --   love.graphics.newImage('assets/sprites/clouds/clouds3.png'),
-  --   love.graphics.newImage('assets/sprites/clouds/clouds4.png'),
-  --   love.graphics.newImage('assets/sprites/clouds/clouds5.png'),
-  --   love.graphics.newImage('assets/sprites/clouds/clouds6.png')
-  -- }
-  -- table.insert(cloudsFrames, cloudsFrames[5])
-  -- table.insert(cloudsFrames, cloudsFrames[4])
-  -- table.insert(cloudsFrames, cloudsFrames[3])
-  -- table.insert(cloudsFrames, cloudsFrames[2])
-  -- data.clouds = utils.initAnimation(cloudsFrames, .02)
-
   local logosFrames = {
     love.graphics.newImage('assets/sprites/logos/logos1.png'),
     love.graphics.newImage('assets/sprites/logos/logos2.png'),
@@ -46,10 +32,10 @@ local function loader(utils)
   data.door = utils.initImage('assets/sprites/door.png')
 
   local textures = {
-    love.graphics.newImage('assets/sprites/aim_system1.png'),
-    love.graphics.newImage('assets/sprites/aim_system2.png'),
-    love.graphics.newImage('assets/sprites/aim_system3.png'),
-    love.graphics.newImage('assets/sprites/aim_system4.png')
+    love.graphics.newImage('assets/sprites/sprites1.png'),
+    love.graphics.newImage('assets/sprites/sprites2.png'),
+    love.graphics.newImage('assets/sprites/sprites3.png'),
+    love.graphics.newImage('assets/sprites/sprites4.png')
   }
   data.dollarStart = utils.initQuad(textures[1], 52, 34, 3, 13)
   data.dollarStack = {
@@ -81,7 +67,7 @@ local function loader(utils)
     utils.initQuad(textures[1], 48, 28, 12, 5, nil, 33)
   }
 
-  local bookTexture = love.graphics.newImage('assets/sprites/books_2.png')
+  local bookTexture = love.graphics.newImage('assets/sprites/books.png')
   data.article = utils.initQuad(bookTexture, 0, 64, 11, 7)
   -- data.article = utils.initQuad(bookTexture, 1, 80, 11, 7)
   -- TODO il faut quand meme écarter les piles pour les pb de clipping

@@ -15,14 +15,9 @@ local fonts = {
   ackboo = love.graphics.newFont('assets/fonts/comic-sans-ms/ComicSansMS3.ttf'), --, 6 * utils.ratio)
   izual = love.graphics.newFont('assets/fonts/upheaval/upheavtt.ttf', 20 * utils.ratio), --, 6 * utils.ratio)
   sebum = love.graphics.newFont('assets/fonts/alagard.ttf', 24 * utils.ratio)
-  -- ellen = love.graphics.newFont('assets/fonts/dogica/TTF/dogica.ttf'), --, 6 * utils.ratio)
-  -- sebum = love.graphics.newFont('assets/fonts/exmouth/exmouth_.ttf', 8 * utils.ratio),
-  -- ellen = love.graphics.newFont('assets/fonts/mortified_drip/MortifiedDrip.ttf', 7 * utils.ratio),
-  -- ivan = love.graphics.newFont('assets/fonts/CT ProLamina.ttf', 9 * utils.ratio),
 }
 fonts.ivan = fonts.default
 fonts.ellen = fonts.default
-fonts.sebum:setLineHeight(.9)
 
 local texts = {
   start = utils.text.init(fonts.default, "C'est partiiii !"),
