@@ -2,169 +2,14 @@ love.graphics.setDefaultFilter('nearest', 'nearest')
 
 -- sprites
 local utils = require 'utils'
+local loader = require 'loader'
+local data = loader(utils)
 
-local background = utils.initImage('assets/sprites/background.png')
-local wavesFrames = {
-  love.graphics.newImage('assets/sprites/waves/waves1.png'),
-  love.graphics.newImage('assets/sprites/waves/waves2.png'),
-  love.graphics.newImage('assets/sprites/waves/waves3.png'),
-  love.graphics.newImage('assets/sprites/waves/waves4.png'),
-  love.graphics.newImage('assets/sprites/waves/waves5.png'),
-  love.graphics.newImage('assets/sprites/waves/waves6.png')
-}
-table.insert(wavesFrames, wavesFrames[5])
-table.insert(wavesFrames, wavesFrames[4])
-table.insert(wavesFrames, wavesFrames[3])
-table.insert(wavesFrames, wavesFrames[2])
-local waves = utils.initAnimation(wavesFrames, .01)
-local cloudsFrames = {
-  love.graphics.newImage('assets/sprites/clouds/clouds1.png'),
-  love.graphics.newImage('assets/sprites/clouds/clouds2.png'),
-  love.graphics.newImage('assets/sprites/clouds/clouds3.png'),
-  love.graphics.newImage('assets/sprites/clouds/clouds4.png'),
-  love.graphics.newImage('assets/sprites/clouds/clouds5.png'),
-  love.graphics.newImage('assets/sprites/clouds/clouds6.png')
-}
-table.insert(cloudsFrames, cloudsFrames[5])
-table.insert(cloudsFrames, cloudsFrames[4])
-table.insert(cloudsFrames, cloudsFrames[3])
-table.insert(cloudsFrames, cloudsFrames[2])
-local clouds = utils.initAnimation(cloudsFrames, .02)
-local logosFrames = {
-  love.graphics.newImage('assets/sprites/logos/logos1.png'),
-  love.graphics.newImage('assets/sprites/logos/logos2.png'),
-  love.graphics.newImage('assets/sprites/logos/logos3.png'),
-  love.graphics.newImage('assets/sprites/logos/logos4.png'),
-  love.graphics.newImage('assets/sprites/logos/logos5.png'),
-  love.graphics.newImage('assets/sprites/logos/logos6.png')
-}
-local logos = utils.initAnimation(logosFrames, .1)
-local foreground = utils.initImage('assets/sprites/foreground.png')
-local door = utils.initImage('assets/sprites/door.png')
-local textures = {
-  love.graphics.newImage('assets/sprites/aim_system1.png'),
-  love.graphics.newImage('assets/sprites/aim_system2.png'),
-  love.graphics.newImage('assets/sprites/aim_system3.png'),
-  love.graphics.newImage('assets/sprites/aim_system4.png')
-}
-local dollarStart = utils.initQuad(textures[1], 49, 34, 3, 13)
-local dollarStack = {
-  utils.initQuad(textures[1], 52, 34, 3, 13),
-  utils.initQuad(textures[1], 55, 34, 3, 13),
-  utils.initQuad(textures[1], 58, 34, 3, 13),
-  utils.initQuad(textures[1], 61, 34, 3, 13),
-  utils.initQuad(textures[1], 64, 34, 3, 13),
-  utils.initQuad(textures[1], 67, 34, 3, 13),
-  utils.initQuad(textures[1], 70, 34, 3, 13),
-  utils.initQuad(textures[1], 73, 34, 3, 13),
-  utils.initQuad(textures[1], 76, 34, 3, 13),
-}
-local dollarEnd = utils.initQuad(textures[1], 79, 34, 8, 13, .5)
-local cursor = utils.initQuad(textures[1], 66, 16, 22, 14)
-local ruler = utils.initQuad(textures[1], 1, 1, 6, 46, nil, 43)
-local tick = utils.initQuad(textures[1], 20, 5, 6, 6)
-local goal = utils.initQuad(textures[1], 8, 12, 8, 8)
--- local target = utils.initQuad(textures[1], 17, 17, 14, 14)
-local target = utils.initQuad(textures[2], 15, 19, 20, 10)
-local plane = utils.initQuad(textures[1], 19, 38, 11, 7, nil, 5)
-local placeholder = utils.initQuad(textures[1], 71, 8, 12, 6)
-local stress = {
-  utils.initQuad(textures[1], 48, 0, 12, 5, nil, 33),
-  utils.initQuad(textures[1], 48, 4, 12, 5, nil, 33),
-  utils.initQuad(textures[1], 48, 8, 12, 5, nil, 33),
-  utils.initQuad(textures[1], 48, 12, 12, 5, nil, 33),
-  utils.initQuad(textures[1], 48, 16, 12, 5, nil, 33),
-  utils.initQuad(textures[1], 48, 20, 12, 5, nil, 33),
-  utils.initQuad(textures[1], 48, 24, 12, 5, nil, 33),
-  utils.initQuad(textures[1], 48, 28, 12, 5, nil, 33)
-}
-local bookTexture = love.graphics.newImage('assets/sprites/books_2.png')
-local article = utils.initQuad(bookTexture, 0, 64, 11, 7)
--- local article = utils.initQuad(bookTexture, 1, 80, 11, 7)
--- TODO il faut quand meme écarter les piles pour les pb de clipping
-local mags = {
-  utils.initQuad(bookTexture, 11, 61, 11, 10, nil, 7),
-  utils.initQuad(bookTexture, 22, 57, 11, 14, nil, 11),
-  utils.initQuad(bookTexture, 33, 53, 11, 18, nil, 15),
-  utils.initQuad(bookTexture, 44, 49, 11, 22, nil, 19),
-  utils.initQuad(bookTexture, 55, 45, 11, 26, nil, 23),
-  utils.initQuad(bookTexture, 66, 41, 11, 30, nil, 27),
-  utils.initQuad(bookTexture, 77, 37, 11, 34, nil, 31),
-  utils.initQuad(bookTexture, 88, 33, 11, 38, nil, 35),
-  utils.initQuad(bookTexture, 99, 29, 11, 42, nil, 39),
-  utils.initQuad(bookTexture, 110, 25, 11, 46, nil, 43) -- 10
-  -- utils.initQuad(bookTexture, 12, 73, 11, 14, nil, 11),
-  -- utils.initQuad(bookTexture, 23, 65, 11, 22, nil, 19),
-  -- utils.initQuad(bookTexture, 34, 57, 11, 30, nil, 27),
-  -- utils.initQuad(bookTexture, 45, 49, 11, 38, nil, 35),
-  -- utils.initQuad(bookTexture, 56, 41, 11, 46, nil, 43),
-  -- utils.initQuad(bookTexture, 67, 33, 11, 54, nil, 51),
-  -- utils.initQuad(bookTexture, 78, 25, 11, 62, nil, 59),
-  -- utils.initQuad(bookTexture, 89, 17, 11, 70, nil, 67),
-  -- utils.initQuad(bookTexture, 100, 9, 11, 78, nil, 75),
-  -- utils.initQuad(bookTexture, 111, 1, 11, 86, nil, 83) -- 10
-}
-
-local ivan = utils.initAgent(2, 7, 0)
-local ackboo = utils.initAgent(6, 20)
-local izual = utils.initAgent(9, 20)
-local sebum = utils.initAgent(12, 20)
-local ellen = utils.initAgent(15, 20)
-
-local characters = {
-  love.graphics.newImage('assets/sprites/cpc_assets1.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets2.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets3.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets4.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets5.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets6.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets7.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets8.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets9.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets10.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets11.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets12.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets13.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets14.png'),
-  love.graphics.newImage('assets/sprites/cpc_assets15.png'),
-}
-local idleFrames = utils.slice(characters, 2)
-ivan.animations.idle = utils.initAnimation(idleFrames, 2, 0, 0, 21, 31, nil, 28)
-ackboo.animations.idle = utils.initAnimation(idleFrames, 2, 20, 2, 17, 29, nil, 28)
-izual.animations.idle = utils.initAnimation(idleFrames, 2, 37, 2, 17, 29, nil, 28)
-sebum.animations.idle = utils.initAnimation(idleFrames, 2, 53, 2, 18, 29, nil, 28)
-ellen.animations.idle = utils.initAnimation(idleFrames, 2, 72, 2, 15, 29, nil, 28)
-local blinkFrames = utils.slice(characters, 1, 2)
-ivan.animations.blink = utils.initAnimation(blinkFrames, 2, 0, 0, 21, 31, nil, 28)
-ackboo.animations.blink = utils.initAnimation(blinkFrames, 2, 20, 2, 17, 29, nil, 28)
-izual.animations.blink = utils.initAnimation(blinkFrames, 2, 37, 2, 17, 29, nil, 28)
-sebum.animations.blink = utils.initAnimation(blinkFrames, 2, 53, 2, 18, 29, nil, 28)
-ellen.animations.blink = utils.initAnimation(blinkFrames, 2, 72, 2, 15, 29, nil, 28)
-local walkingFrames = utils.slice(characters, 10, 11)
-ivan.animations.walking = utils.initAnimation(walkingFrames, 2, 0, 0, 21, 31, nil, 28)
-ackboo.animations.walking = utils.initAnimation(walkingFrames, 2, 20, 2, 17, 29, nil, 28)
-izual.animations.walking = utils.initAnimation(walkingFrames, 2, 37, 2, 17, 29, nil, 28)
-sebum.animations.walking = utils.initAnimation(walkingFrames, 2, 53, 2, 18, 29, nil, 28)
-ellen.animations.walking = utils.initAnimation(walkingFrames, 2, 72, 2, 15, 29, nil, 28)
-ivan.animations.leaving = ivan.animations.walking
-ackboo.animations.leaving = ackboo.animations.walking
-izual.animations.leaving = izual.animations.walking
-sebum.animations.leaving = sebum.animations.walking
-ellen.animations.leaving = ellen.animations.walking
-ivan.animations.goingToWork = ivan.animations.walking
-ackboo.animations.goingToWork = ackboo.animations.walking
-izual.animations.goingToWork = izual.animations.walking
-sebum.animations.goingToWork = sebum.animations.walking
-ellen.animations.goingToWork = ellen.animations.walking
-ivan.animations.work = ivan.animations.walking
-ackboo.animations.work = ackboo.animations.walking
-izual.animations.work = izual.animations.walking
-sebum.animations.work = sebum.animations.walking
-ellen.animations.work = ellen.animations.walking
-local aimingFrames = utils.slice(characters, 13)
-ivan.animations.aiming = utils.initAnimation(aimingFrames, 2, 0, 0, 21, 31, nil, 28)
-
-exploding = utils.initAnimation(textures, 3, 15, 32, 18, 15, 9, 11, true)
+local ivan = utils.initAgent(2, 7, data.ivanAnimations, 0)
+local ackboo = utils.initAgent(6, 20, data.ackbooAnimations)
+local izual = utils.initAgent(9, 20, data.izualAnimations)
+local sebum = utils.initAgent(12, 20, data.sebumAnimations)
+local ellen = utils.initAgent(15, 20, data.ellenAnimations)
 
 local W, H = love.graphics.getDimensions()
 local OX, OY = W / 2, H / 2
@@ -221,10 +66,8 @@ local gameState = {
   money = 50,
   magCount = 0,
   articleCount = 0,
-  DEBUG_T = 0,
-  article = article,
-  placeholder = placeholder,
-  mags = mags,
+  DEBUG_T = nil,
+  data = data, -- contient les images, quads et animations
   AIMING_WINDOW = 6, -- temps laissé au joueur pour viser
   PX1 = -2, PY1 = 15, -- départ des avions
   FLYING_SPEED = 30, -- vitesse des avions (variable ?)
@@ -245,7 +88,6 @@ local gameState = {
     {127, 116}, {129, 116}, {131, 116}, {133, 116}, {135, 116}, {137, 116}, {139, 116},
     {127, 118}, {129, 118}, {131, 118}, {133, 118}
   },
-  stress = stress, -- c'est n'importe quoi utils, gameState, les globals, ...
   agents = {ivan, ackboo, izual, sebum, ellen},
   door = {image = door, cell = utils.cellAt(13, 17), ox = .5},
   OX = OX,
@@ -253,7 +95,7 @@ local gameState = {
   aimingObs = {},
   updateCell = function(self, x, y)
     self.cell = utils.cellAt(utils.cellCoordinates(x, y))
-    self.aimingObs = utils.heightThreshold(self.cell)
+    self.aimingObs = utils.heightThreshold(self.cell) -- TODO à maj en temps réel
   end,
   update = function(self, dt)
     self.time = self.time + self.TIME_SPEED * dt
@@ -345,14 +187,14 @@ local gameState = {
       table.insert(self.aimingObs[h].cell.flying, p)
     else
       p.exploding = false
-      p.animations = {exploding = utils.copyAnimation(exploding)}
+      p.animations = {exploding = utils.copyAnimation(self.data.exploding)}
       p.animations.exploding.t = 0
       table.insert(self.aimingObs[h].cell.missed, p)
     end
     p.len = utils.len(p.x1, p.y1, p.x2, p.y2)
     p.x, p.y = p.x1, p.y1
     p.t = 0
-    p.quad = plane
+    p.quad = self.data.plane
     p.update = utils.updatePlane
     self.aiming = false
     self.money = self.money - 1
@@ -361,9 +203,9 @@ local gameState = {
 
 function love.update(dt)
   gameState:update(dt)
-  logos:update(dt)
-  waves:update(dt)
-  clouds:update(dt)
+  gameState.data.logos:update(dt)
+  gameState.data.waves:update(dt)
+  gameState.data.clouds:update(dt)
   utils.updateCells(dt, gameState)
 end
 
@@ -373,42 +215,50 @@ love.graphics.setFont(fonts.default)
 
 function love.draw()
   love.graphics.setColor(1, 1, 1)
-  utils.drawImage(background, OX, OY)
-  utils.drawQuad(logos, OX, OY)
-  utils.drawQuad(waves, OX, OY)
-  utils.drawQuad(clouds, OX, OY)
+
+  utils.drawImage(gameState.data.background, OX, OY)
+  utils.drawQuad(gameState.data.logos, OX, OY)
+  utils.drawQuad(gameState.data.waves, OX, OY)
+  utils.drawQuad(gameState.data.clouds, OX, OY)
+
   if #gameState.door.cell.agents ~= 0 then
-    utils.drawImage(door, OX, OY)
+    utils.drawImage(gameState.data.door, OX, OY)
   end
+
   utils.drawCalendar(gameState)
   -- utils.drawWalkingAreas()
+
   if gameState.cell and gameState.cell.redacWalkable then
     utils.drawLine(utils.lineAt(gameState.cell.y))
   end
+
   utils.drawCells(gameState)
+
   if gameState.cell and gameState.cell.redacWalkable then
-    utils.drawQuad(cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
-    utils.drawQuad(ruler, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
+    utils.drawQuad(gameState.data.cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
+    utils.drawQuad(gameState.data.ruler, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
     love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
     for i = 9, 0, -1 do
       if gameState.aimingObs[i].onTop == true then -- à ajuster
       --   love.graphics.setColor(233 / 255, 54 / 255, 54 / 255)
       -- else
       --   love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
-        utils.drawQuad(tick, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy - i * utils.sy))
+        utils.drawQuad(gameState.data.tick, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy - i * utils.sy))
       end
     end
     love.graphics.setColor(1, 1, 1)
     -- utils.drawQuad(goal, utils.worldCoordinates(gameState.cell.x, gameState.cell.y - gameState.cell.h))
     if gameState.aiming then
-      utils.drawQuad(target, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy + gameState.offset * utils.sy))
+      utils.drawQuad(gameState.data.target, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy + gameState.offset * utils.sy))
     end
   end
+
   -- utils.drawText(texts.ackboo.test[1], utils.worldCoordinates(PATH.at(P)))
   -- utils.drawText(texts.izual.test[1], utils.worldCoordinates(5, 40))
   -- utils.drawText(texts.sebum.test[1], sx, sy)
   -- utils.drawText(texts.ellen.test[1], utils.worldCoordinates(15, 40))
-  utils.drawImage(foreground, OX, OY)
+  utils.drawImage(gameState.data.foreground, OX, OY)
+
   utils.getColor()
   -- love.graphics.setColor(0, 0, 0)
   love.graphics.print(love.timer.getFPS(), 64, 64)
@@ -420,16 +270,19 @@ function love.draw()
   --   i = i + 1
   -- end
   -- love.graphics.print(gameState.DEBUG_T, 400, 64)
+
   utils.setColor()
-  -- utils.drawWalkingAreas()
-  local dx, dy = utils.worldCoordinates(2.5, 1)
-  utils.drawQuad(dollarStart, dx, dy)
-  for i = 0, math.min(200, gameState.money) do --math.ceil(gameState.money / 5) do
-  -- for i = 0, math.ceil(gameState.money / 5) do
-    utils.drawQuad(dollarStack[i % #dollarStack + 1], dx + (i + 1) * utils.ratio, dy)
+
+  if gameState.money > 0 then
+    local dx, dy = utils.worldCoordinates(2.5, 1)
+    utils.drawQuad(gameState.data.dollarStart, dx, dy)
+    for i = 0, math.min(200, gameState.money) do --math.ceil(gameState.money / 5) do
+    -- for i = 0, math.ceil(gameState.money / 5) do
+      utils.drawQuad(gameState.data.dollarStack[i % #gameState.data.dollarStack + 1], dx + (i + 1) * utils.ratio, dy)
+    end
+    utils.drawQuad(gameState.data.dollarEnd, dx + (math.min(200, gameState.money) + 1) * utils.ratio, dy)
+    -- utils.drawQuad(dollarEnd, dx + (math.ceil(gameState.money / 5) + 1) * utils.ratio, dy)
   end
-  utils.drawQuad(dollarEnd, dx + (math.min(200, gameState.money) + 1) * utils.ratio, dy)
-  -- utils.drawQuad(dollarEnd, dx + (math.ceil(gameState.money / 5) + 1) * utils.ratio, dy)
 end
 
 function love.mousemoved(x, y)

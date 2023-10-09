@@ -120,7 +120,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
   for i, cell in ipairs(utils.orderedCells) do
     for i, agent in ipairs(cell.agents) do
       if agent.behind == false then
-        utils.drawAgent(agent, gameState.stress)
+        utils.drawAgent(agent, gameState.data.stress)
       end
     end
     if #cell.objs > 0 or cell.h ~= 0 then
@@ -128,7 +128,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
         love.graphics.setColor(r, g, b, .2)
       end
       if cell.h ~= 0 and cell.redacWalkable then
-        utils.drawQuad(gameState.mags[cell.h], utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy))
+        utils.drawQuad(gameState.data.mags[cell.h], utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy))
       end
       for j, obj in ipairs(cell.objs) do
         utils.drawQuad(obj.quad, utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy - cell.h * utils.sy))
@@ -139,7 +139,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
     end
     for i, agent in ipairs(cell.agents) do
       if agent.behind then
-        utils.drawAgent(agent, gameState.stress)
+        utils.drawAgent(agent, gameState.data.stress)
       end
     end
     for j, flying in ipairs(cell.flying) do
@@ -281,7 +281,7 @@ function utils.copyAnimation(animation)
   }
 end
 
-function utils.initAgent(x, y, stress)
+function utils.initAgent(x, y, animations, stress)
   local agent = {
     x = x,
     y = y,
@@ -290,7 +290,7 @@ function utils.initAgent(x, y, stress)
     behind = false,
     t = 0,
     path = nil,
-    animations = {},
+    animations = animations,
     update = utils.updateAgent,
     goTo = utils.goTo,
     stress = 0--stress or love.math.random(0, 7)
@@ -457,7 +457,7 @@ function utils.updateAgent(agent, dt, gameState)
   elseif agent.state == 'work' then
     local objs = agent.target.objs
     table.remove(objs, #objs) -- on retire le dernier objet (un avion)
-    table.insert(objs, {quad = gameState.article})
+    table.insert(objs, {quad = gameState.data.article})
     agent.target.waitingFor = nil -- le rédacteur a ramasser l'avion
     agent.target = nil
     agent.stress = math.min(agent.stress + 1, 8)
