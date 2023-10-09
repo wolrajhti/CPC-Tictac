@@ -458,7 +458,7 @@ function utils.updateAgent(agent, dt, gameState)
     if love.math.random() < .1 * dt then
       agent.headState = 'blink'
       agent.animations.head.blink.t = 0
-    elseif love.math.random() < .1 * dt then
+    elseif love.math.random() < .9 * dt then -- TODO remettre à .1
       agent.tongue:random()
     end
   elseif agent.headState ~= 'cry' then

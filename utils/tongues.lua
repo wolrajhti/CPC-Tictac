@@ -6,7 +6,7 @@ local function updateTongue(self, dt) -- body state
 end
 
 local function work(self)
-  if not self.current then
+  if not self.current and #self.texts.work > 0 then
     self.current = self.texts.work[love.math.random(1, #self.texts.work)]
     self.t = 0
   end
@@ -18,7 +18,7 @@ local function leaving(self)
 end
 
 local function random(self)
-  if not self.current then
+  if not self.current and #self.texts.random > 0 then
     self.current = self.texts.random[love.math.random(1, #self.texts.random)]
     self.t = 0
   end
@@ -44,8 +44,8 @@ local loadTongues = function(fonts)
           "LEAVING 3"
         },
         random = {
-          "RAND 1",
-          "RAND 2",
+          "Oh nooon ya que 3 dinosaurus...",
+          "Vous connaissez le papier toilette humide ?",
           "RAND 3",
         }
       },
@@ -62,19 +62,24 @@ local loadTongues = function(fonts)
       t = 0,
       texts = {
         work = {
-          "WORK 1",
-          "WORK 2",
-          "WORK 3"
+          "Pas compatible vSync .. 6/10",
+          "Bien, mais il pleut. J'aime pas la pluie\n5/10",
+          "On peut pas decorer sa maison, d'ailleurs\nya pas de maison dans le jeu 7/10",
+          "On peut remapper en azerty .. a chier 3/10",
+          "Parce que j'aime la vie 10/10",
+          -- "Aussi desagréable que les raquettes de ping-pong à picots ! 2/10"
+          "Ce jeu est ce que sont les raquettes à picots au ping-pong :\nUNE ES-CROQUE-RIE 0/10"
         },
         leaving = {
-          "LEAVING 1",
-          "LEAVING 2",
-          "LEAVING 3"
+          "Jsuis pas jojo le clodo !",
+          "Au moins il me reste Corentin",
+          "Ya l'audio book Napoleon Tome XVII qui\nm'attend les amis"
         },
         random = {
-          "RAND 1",
-          "RAND 2",
-          "RAND 3",
+          "Laissez passer, jsuis journaliste\ncarte de presse, tout ca, tout ca",
+          "Ca fait zizir",
+          "On tient les murs",
+          "Papy il a faim"
         }
       },
       update = updateTongue,
@@ -118,19 +123,22 @@ local loadTongues = function(fonts)
       t = 0,
       texts = {
         work = {
-          "WORK 1",
-          "WORK 2",
-          "WORK 3"
+          -- "Une experience tres synesthesique : Post-modernisme / 10",
+          -- "Le trublion du Boomer-Shooter : Casu / 10",
+          -- "Votre body-awareness va en prenre un coup !",
+          -- "Uncanny as f**ck 8/10",
+          "Reouvre le debat des pro taxonomie Vs pro arbre de\ncompetence. Tres interessant 9/10",
+          "Ce qu'est le quaternion a la 3D : IM-BI-TABLE 3/10",
+          "Nutri-score tres bas 6/10",
+          "Pour les gros nerds quadr-A 7/10"
         },
         leaving = {
-          "LEAVING 1",
-          "LEAVING 2",
-          "LEAVING 3"
+          "Qu'il en soit ainsi ... maitre",
         },
         random = {
-          "RAND 1",
-          "RAND 2",
-          "RAND 3",
+          "Mais attend on dit de-gin-gande ou de-GUIN-gande ?\nAh ! euh dans ... \"En avant gingamp\" ... ?!\nAh oui mais : GIN-gembre ? ... je suis perplexe",
+          "C'est .... A-ssez interessant ...",
+          "Jsuis turbo sexy"
         }
       },
       update = updateTongue,
