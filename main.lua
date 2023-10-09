@@ -39,7 +39,8 @@ local texts = {
   money = utils.text.init(fonts.default, ""),
   article = utils.text.init(fonts.default, ""),
   mag = utils.text.init(fonts.default, ""),
-  gameOver = utils.text.init(fonts.default, "GAME OVER")
+  gameOver = utils.text.init(fonts.default, "GAME OVER"),
+  home = utils.text.init(fonts.default, "CPC TicTac / Air Pigiste / Wolrajhti 2023 (Make something horrible 2023)"),
   -- ackboo = {
   --   test = {
   --     utils.initText(fonts.default, 'Bonsoir les frerots frerottes')
@@ -190,10 +191,16 @@ local gameState = {
             for i, cell in ipairs(utils.orderedCells) do
               if cell.redacWalkable and #cell.objs ~= 0 then
                 needsUpdate = needsUpdate or self.cell and cell.y == self.cell.y
-                table.remove(cell.objs, #cell.objs)
+                local p = table.remove(cell.objs, #cell.objs)
                 if cell.waitingFor == nil then -- s'il y a un objet et que waitingFor est nil => c'est un article !
                   cell.h = math.min(cell.h + 1, 10)
                   self:setMoney(self.money + 2)
+                else
+                  p.exploding = false
+                  p.update = utils.updatePlane
+                  p.animations = {exploding = utils.copyAnimation(self.data.exploding)}
+                  p.animations.exploding.t = 0
+                  table.insert(cell.missed, p)
                 end
               end
             end
@@ -287,7 +294,7 @@ local gameState = {
   end
 }
 
-gameState:setMoney(50)
+gameState:setMoney(20)
 gameState:setArticleCount(0)
 gameState:setArticleTodoCount(5)
 gameState:setMagCount(0)
@@ -323,20 +330,22 @@ function love.draw()
 
   if ivan.state ~= 'walking' and gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
     utils.drawQuad(gameState.data.cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
-    utils.drawQuad(gameState.data.ruler, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
-    love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
-    for i = 9, 0, -1 do
-      if gameState.aimingObs[i].onTop == true then -- à ajuster
-      --   love.graphics.setColor(233 / 255, 54 / 255, 54 / 255)
-      -- else
-      --   love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
-        utils.drawQuad(gameState.data.tick, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy - i * utils.sy))
+    if gameState.state ~= 'IDLE' or gameState.aiming then
+      utils.drawQuad(gameState.data.ruler, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
+      love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
+      for i = 9, 0, -1 do
+        if gameState.aimingObs[i].onTop == true then -- à ajuster
+        --   love.graphics.setColor(233 / 255, 54 / 255, 54 / 255)
+        -- else
+        --   love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
+          utils.drawQuad(gameState.data.tick, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy - i * utils.sy))
+        end
       end
-    end
-    love.graphics.setColor(1, 1, 1)
-    -- utils.drawQuad(goal, utils.worldCoordinates(gameState.cell.x, gameState.cell.y - gameState.cell.h))
-    if gameState.aiming then
-      utils.drawQuad(gameState.data.target, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy + gameState.offset * utils.sy))
+      love.graphics.setColor(1, 1, 1)
+      -- utils.drawQuad(goal, utils.worldCoordinates(gameState.cell.x, gameState.cell.y - gameState.cell.h))
+      if gameState.aiming then
+        utils.drawQuad(gameState.data.target, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy + gameState.offset * utils.sy))
+      end
     end
   end
 
@@ -359,19 +368,21 @@ function love.draw()
 
   utils.setColor()
 
-  if gameState.money > 0 then
-    local dx, dy = utils.worldCoordinates(4, 1)
-    utils.drawQuad(gameState.data.dollarStart, dx, dy)
-    for i = 0, math.min(200, gameState.money) - 1 do --math.ceil(gameState.money / 5) do
-      utils.drawQuad(gameState.data.dollarStack[(i - 1 + (gameState.money % #gameState.data.dollarStack)) % #gameState.data.dollarStack + 1], dx + (i + 1) * utils.ratio, dy)
+  if gameState.state ~= 'IDLE' then
+    if gameState.money > 0 then
+      local dx, dy = utils.worldCoordinates(4, 1)
+      utils.drawQuad(gameState.data.dollarStart, dx, dy)
+      for i = 0, math.min(200, gameState.money) - 1 do --math.ceil(gameState.money / 5) do
+        utils.drawQuad(gameState.data.dollarStack[(i - 1 + (gameState.money % #gameState.data.dollarStack)) % #gameState.data.dollarStack + 1], dx + (i + 1) * utils.ratio, dy)
+      end
+      utils.drawQuad(gameState.data.dollarEnd, dx + (math.min(200, gameState.money) - 1) * utils.ratio, dy)
+      -- utils.drawQuad(dollarEnd, dx + (math.ceil(gameState.money / 5) + 1) * utils.ratio, dy)
     end
-    utils.drawQuad(gameState.data.dollarEnd, dx + (math.min(200, gameState.money) - 1) * utils.ratio, dy)
-    -- utils.drawQuad(dollarEnd, dx + (math.ceil(gameState.money / 5) + 1) * utils.ratio, dy)
-  end
 
-  utils.text.draw(gameState.texts.money, utils.worldCoordinates(5, 1.5))
-  utils.text.draw(gameState.texts.mag, utils.worldCoordinates(5, 2.5))
-  utils.text.draw(gameState.texts.article, utils.worldCoordinates(7, 14))
+    utils.text.draw(gameState.texts.money, utils.worldCoordinates(5, 1.5))
+    utils.text.draw(gameState.texts.mag, utils.worldCoordinates(5, 2.5))
+    utils.text.draw(gameState.texts.article, utils.worldCoordinates(7, 14))
+  end
 
   if gameState.state == 'PAUSE' then
     utils.text.drawTitle(gameState.texts.pause, OX, OY)
@@ -382,6 +393,8 @@ function love.draw()
     end
   elseif gameState.state == 'GAME_OVER' then
     utils.text.drawTitle(gameState.texts.gameOver, OX, OY)
+  elseif gameState.state == 'IDLE' then
+    utils.text.drawSmall(gameState.texts.home, utils.worldCoordinates(10, 24))
   end
 end
 
