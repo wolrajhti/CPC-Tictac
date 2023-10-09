@@ -129,7 +129,8 @@ local gameState = {
   data = data, -- contient les images, quads et animations
   AIMING_WINDOW = 6, -- temps laissé au joueur pour viser
   PX1 = -2, PY1 = 15, -- départ des avions
-  FLYING_SPEED = 30, -- vitesse des avions (variable ?)
+  FLYING_SPEED_MIN = 10, -- vitesse des avions (variable ?)
+  FLYING_SPEED_MAX = 30, -- vitesse des avions (variable ?)
   cell, -- case survolée
   aiming, -- bool
   aimingSpeed, -- vitesse de déplacement du viseur
@@ -266,7 +267,7 @@ local gameState = {
     local p = {
       x1 = self.PX1,
       y1 = self.PY1,
-      speed = self.FLYING_SPEED,
+      speed = love.math.random(self.FLYING_SPEED_MIN, self.FLYING_SPEED_MAX),
     }
     -- il faut rappeler heightThreshold pour être sur d'avoir la donnée à jour
     -- print('OBS', self.aimingObs[h].cell.x .. ', ' .. self.aimingObs[h].cell.y, 'DEBUG-T = ' ..self.DEBUG_T)
