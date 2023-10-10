@@ -1,0 +1,1 @@
+cmd /c copy /b love11.4-32.exe+game.love "CPC Tictac.exe"
