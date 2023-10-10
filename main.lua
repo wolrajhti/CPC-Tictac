@@ -27,7 +27,7 @@ local texts = {
   mag = utils.text.init(fonts.default, ""),
   gameOver = utils.text.init(fonts.default, "GAME OVER"),
 
-  
+
   home = utils.text.init(fonts.default, "an Air Pigiste game for the \"Make Something Horrible, l'edition des 20 ans\" by Wolrajhti"),
 }
 
@@ -176,10 +176,10 @@ local gameState = {
             for i, cell in ipairs(utils.orderedCells) do
               if cell.redacWalkable and #cell.objs ~= 0 then
                 needsUpdate = needsUpdate or self.cell and cell.y == self.cell.y
-                local p = table.remove(cell.objs, #cell.objs)
                 if cell.waitingFor == nil then -- s'il y a un objet et que waitingFor est nil => c'est un article !
                   table.insert(candidates, cell)
                 else
+                  local p = table.remove(cell.objs, #cell.objs)
                   p.exploding = false
                   p.update = utils.updatePlane
                   p.animations = {exploding = utils.copyAnimation(self.data.exploding)}
@@ -192,6 +192,7 @@ local gameState = {
               for i, cell in ipairs(candidates) do
                 cell.h = math.min(cell.h + 1, 10)
                 self:setMoney(self.money + 2)
+                table.remove(cell.objs, #cell.objs)
               end
             end
             if needsUpdate then
