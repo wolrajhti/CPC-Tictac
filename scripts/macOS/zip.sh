@@ -1,0 +1,1 @@
+zip -9 -r game.love assets utils conf.lua loader.lua main.lua utils.lua

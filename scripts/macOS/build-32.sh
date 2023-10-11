@@ -1,0 +1,1 @@
+cat game.love love11.4-32.exe > "CPC Tictac-win32/CPC Tictac.exe"
