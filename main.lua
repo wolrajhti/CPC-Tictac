@@ -168,9 +168,6 @@ local gameState = {
             end
           end
           if self.endOfTheMonth then
-            self:setArticleCount(0)
-            self:setArticleTodoCount(self.articleTodoCount + 1)
-            self:setMagCount(self.magCount + 1)
             local candidates = {}
             local needsUpdate = false
             for i, cell in ipairs(utils.orderedCells) do
@@ -193,6 +190,11 @@ local gameState = {
                 cell.h = math.min(cell.h + 1, 10)
                 self:setMoney(self.money + 2)
                 table.remove(cell.objs, #cell.objs)
+              end
+              self:setArticleCount(0)
+              self:setMagCount(self.magCount + 1)
+              if #candidates > self.articleTodoCount + 1 then -- si trop de production => le patronnat prend ça pour acquis
+                self:setArticleTodoCount(self.articleTodoCount + 1)
               end
             end
             if needsUpdate then

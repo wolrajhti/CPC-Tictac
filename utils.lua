@@ -453,7 +453,7 @@ function utils.updateAgent(agent, dt, gameState)
     agent.target = nil
     agent.stress = math.min(agent.stress + 1, 8)
     agent.state = 'idle'
-    if love.math.random() < .5 * dt then
+    if love.math.random() < .2 * dt then
       agent.tongue:work()
     end
   end
@@ -463,7 +463,7 @@ function utils.updateAgent(agent, dt, gameState)
     if love.math.random() < .1 * dt then
       agent.headState = 'blink'
       agent.animations.head.blink.t = 0
-    elseif love.math.random() < .1 * dt then
+    elseif love.math.random() < .05 * dt then
       agent.tongue:random()
     end
   elseif agent.headState ~= 'cry' then
@@ -563,7 +563,7 @@ function utils.drawCalendar(gameState)
 end
 
 local N = {-1, -1, 0, -1, 1, -1, 1, 0, 1, 1, 0, 1, -1, 1, -1, 0}
-local MAX_DIST = 2 * math.sqrt(2) -- TODO à réduire en fonction du temps qui passe -> plus de mag -> moins de perception
+local MAX_DIST = 4 * math.sqrt(2) -- TODO à réduire en fonction du temps qui passe -> plus de mag -> moins de perception
 function utils.findNearest(agents, cell)
   local candidates = {}
   local neighbor
