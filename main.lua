@@ -1,8 +1,8 @@
 love.graphics.setDefaultFilter('nearest', 'nearest')
 
 -- sprites
-local utils = require 'utils'
-local loader = require 'loader'
+local utils = require 'src.utils'
+local loader = require 'src.loader'
 local data = loader(utils)
 
 utils.bw, utils.bh = data.background.image:getDimensions()
@@ -50,7 +50,7 @@ local texts = {
   home = utils.text.init(fonts.default, "an Air Pigiste game for the \"Make Something Horrible, l'edition des 20 ans\" by Wolrajhti"),
 }
 
-local loadTongues = require 'utils.tongues'
+local loadTongues = require 'src.tongues'
 local tongues = loadTongues(fonts)
 
 local ivan = utils.initAgent(2, 7, tongues.ivan, data.ivanAnimations, 0)

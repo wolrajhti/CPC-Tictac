@@ -591,7 +591,7 @@ function utils.findNearest(agents, cell)
   end
 end
 
-require('utils.text')(utils) -- à généraliser
+require 'src.text' (utils) -- à généraliser
 
 utils.initCells() -- ULTRA SALE
 
