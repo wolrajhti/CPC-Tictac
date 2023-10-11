@@ -1,8 +1,4 @@
 local utils = {
-  ratio = 1,
-  cw = 16,
-  ch = 4,
-  sy = .5,
   cells = {},
   orderedCells = {},
   walkableAreas = {
@@ -206,12 +202,13 @@ function utils.heightThreshold(cell)
 end
 
 function utils.worldCoordinates(x, y)
-  return x * utils.cw * utils.ratio, y * utils.ch * utils.ratio
+  return utils.ox + x * utils.cw * utils.ratio,
+         utils.oy + y * utils.ch * utils.ratio
 end
 
 function utils.cellCoordinates(x, y)
-  return math.floor((x + .5 * utils.cw * utils.ratio) / (utils.cw * utils.ratio)),
-         math.floor((y + .5 * utils.ch * utils.ratio) / (utils.ch * utils.ratio))
+  return math.floor(((x - utils.ox) + .5 * utils.cw * utils.ratio) / (utils.cw * utils.ratio)),
+         math.floor(((y - utils.oy) + .5 * utils.ch * utils.ratio) / (utils.ch * utils.ratio))
 end
 
 function utils.initImage(filename, ox, oy)
@@ -554,11 +551,11 @@ function utils.drawCalendar(gameState)
   local day
   for i = 1, gameState.day - 1 do
     day = gameState.CALENDAR_CELLS[i]
-    love.graphics.rectangle('fill', day[1] * utils.ratio, day[2] * utils.ratio, 2 * utils.ratio, 2 * utils.ratio)
+    love.graphics.rectangle('fill', utils.ox + day[1] * utils.ratio, utils.oy + day[2] * utils.ratio, 2 * utils.ratio, 2 * utils.ratio)
   end
   day = gameState.CALENDAR_CELLS[gameState.day]
-  love.graphics.rectangle('fill', day[1] * utils.ratio, day[2] * utils.ratio, 1 * utils.ratio, 2 * utils.ratio)
-  love.graphics.rectangle('fill', (day[1] + 1) * utils.ratio, (day[2] + 1) * utils.ratio, 1 * utils.ratio, 1 * utils.ratio)
+  love.graphics.rectangle('fill', utils.ox + day[1] * utils.ratio, utils.oy + day[2] * utils.ratio, 1 * utils.ratio, 2 * utils.ratio)
+  love.graphics.rectangle('fill', utils.ox + (day[1] + 1) * utils.ratio, utils.oy + (day[2] + 1) * utils.ratio, 1 * utils.ratio, 1 * utils.ratio)
   utils.setColor()
 end
 

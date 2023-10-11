@@ -5,6 +5,25 @@ local utils = require 'utils'
 local loader = require 'loader'
 local data = loader(utils)
 
+utils.bw, utils.bh = data.background.image:getDimensions()
+
+function setSize(w, h)
+  utils.W, utils.H = w, h
+  utils.OX, utils.OY = utils.W / 2, utils.H / 2
+  utils.ratio = utils.ternary(
+    utils.W / utils.H < utils.bw / utils.bh,
+    utils.W / utils.bw,
+    utils.H / utils.bh
+  )
+  utils.ox, utils.oy = (utils.W - utils.bw * utils.ratio) / 2,
+                       (utils.H - utils.bh * utils.ratio) / 2
+  utils.cw = 16
+  utils.ch = 8
+  utils.sy = .5
+end
+
+setSize(love.graphics.getDimensions())
+
 -- fonts
 local fonts = {
   default = love.graphics.newImageFont('assets/fonts/Resource-Imagefont.png',
@@ -12,9 +31,9 @@ local fonts = {
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0" ..
     "123456789.,!?-+/():;%&`'*#=[]\""
   ),
-  ackboo = love.graphics.newFont('assets/fonts/comic-sans-ms/ComicSansMS3.ttf'), --, 6 * utils.ratio)
-  izual = love.graphics.newFont('assets/fonts/upheaval/upheavtt.ttf', 20 * utils.ratio), --, 6 * utils.ratio)
-  sebum = love.graphics.newFont('assets/fonts/alagard.ttf', 24 * utils.ratio)
+  ackboo = love.graphics.newFont('assets/fonts/comic-sans-ms/ComicSansMS3.ttf'),
+  izual = love.graphics.newFont('assets/fonts/upheaval/upheavtt.ttf', 20),
+  sebum = love.graphics.newFont('assets/fonts/alagard.ttf', 24)
 }
 fonts.ivan = fonts.default
 fonts.ellen = fonts.default
@@ -42,14 +61,6 @@ local izual = utils.initAgent(9, 20, tongues.izual, data.izualAnimations)
 local sebum = utils.initAgent(12, 20, tongues.sebum, data.sebumAnimations)
 local ellen = utils.initAgent(13, 18, tongues.ellen, data.ellenAnimations)
 
-local W, H = love.graphics.getDimensions()
-local OX, OY = W / 2, H / 2
-
-utils.ratio = 4 -- ternary(W / H < w / h, W / w, H / h)
-utils.cw = 16
-utils.ch = 8
-utils.sy = .5
-
 local cell
 local aiming = false
 
@@ -62,7 +73,7 @@ local gameState = {
   startOpacity = 1,
   updateStartTimer = function(self, dt)
     self.startTimer = math.min(self.startTimer + dt, 3)
-    self.startOffsetY = - self.startTimer / 3 * .5 * OY
+    self.startOffsetY = - self.startTimer / 3 * .5 * utils.OY
     self.startOpacity = 1 - math.min(self.startTimer, 1.2)
   end,
   -- pause
@@ -122,8 +133,6 @@ local gameState = {
   day = 1,
   time = 0,
   TIME_SPEED = 2, -- à ajuster
-  CALENDAR_X = 131,
-  CALENDAR_Y = 110,
   CALENDAR_CELLS = {
                             {131, 110}, {133, 110}, {135, 110}, {137, 110}, {139, 110},
     {127, 112}, {129, 112}, {131, 112}, {133, 112}, {135, 112}, {137, 112}, {139, 112},
@@ -133,8 +142,6 @@ local gameState = {
   },
   agents = {ivan, ackboo, izual, sebum, ellen},
   door = {image = door, cell = utils.cellAt(13, 17), ox = .5},
-  OX = OX,
-  OY = OY,
   aimingObs = {},
   updateCell = function(self, x, y)
     if self.state ~= 'PAUSE' then
@@ -304,13 +311,12 @@ love.graphics.setFont(fonts.default)
 function love.draw()
   love.graphics.setColor(1, 1, 1)
 
-  utils.drawImage(gameState.data.background, OX, OY)
-  utils.drawQuad(gameState.data.logos, OX, OY)
-  utils.drawQuad(gameState.data.waves, OX, OY)
-  -- utils.drawQuad(gameState.data.clouds, OX, OY)
+  utils.drawImage(gameState.data.background, utils.OX, utils.OY)
+  utils.drawQuad(gameState.data.logos, utils.OX, utils.OY)
+  utils.drawQuad(gameState.data.waves, utils.OX, utils.OY)
 
   if #gameState.door.cell.agents ~= 0 then
-    utils.drawImage(gameState.data.door, OX, OY)
+    utils.drawImage(gameState.data.door, utils.OX, utils.OY)
   end
 
   utils.drawCalendar(gameState)
@@ -347,7 +353,7 @@ function love.draw()
     end
   end
 
-  utils.drawImage(gameState.data.foreground, OX, OY)
+  utils.drawImage(gameState.data.foreground, utils.OX, utils.OY)
 
   if gameState.state ~= 'IDLE' then
     if gameState.money > 0 then
@@ -364,14 +370,14 @@ function love.draw()
   end
 
   if gameState.state == 'PAUSE' then
-    utils.text.drawTitle(gameState.texts.pause, OX, OY)
+    utils.text.drawTitle(gameState.texts.pause, utils.OX, utils.OY)
   elseif gameState.state == 'RUNNING' then
     if gameState.startTimer < 3 then
       love.graphics.setColor(1, 1, 1, gameState.startOpacity)
-      utils.text.drawTitle(gameState.texts.start, OX, OY + gameState.startOffsetY)
+      utils.text.drawTitle(gameState.texts.start, utils.OX, utils.OY + gameState.startOffsetY)
     end
   elseif gameState.state == 'GAME_OVER' then
-    utils.text.drawTitle(gameState.texts.gameOver, OX, OY)
+    utils.text.drawTitle(gameState.texts.gameOver, utils.OX, utils.OY)
   elseif gameState.state == 'IDLE' then
     utils.text.drawSmall(gameState.texts.home, utils.worldCoordinates(10, 24))
   end
@@ -427,7 +433,6 @@ function love.keypressed(key)
   end
 end
 
--- function love.resize(w, h)
---   W, H = w, h
---   OX, OY = W / 2, H / 2
--- end
+function love.resize(w, h)
+  setSize(w, h)
+end
