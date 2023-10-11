@@ -1,3 +1,4 @@
+love.window.setFullscreen(true)
 love.graphics.setDefaultFilter('nearest', 'nearest')
 
 -- sprites
@@ -426,7 +427,12 @@ function love.keypressed(key)
     gameState.DEBUG_T = nil
   end
   if key == 'escape' then
-    love.event.quit()
+    if love.window.getFullscreen() then
+      love.window.setFullscreen(false)
+      setSize(love.graphics.getDimensions())
+    else
+      love.event.quit()
+    end
   elseif key == 'space' then
     gameState.state = utils.ternary(gameState.state == 'PAUSE', 'RUNNING', 'PAUSE') -- faire une pause de 3 min max comme dans l'emission
     gameState:setPauseTimer(2 * 60 + 56)
