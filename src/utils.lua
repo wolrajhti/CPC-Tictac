@@ -591,9 +591,9 @@ function utils.findNearest(agents, cell)
   end
 end
 
-function utils.sort(tab)
+function utils.shuffle(tab)
   local rnd = {}
-  local function comp(i1, i2)
+  local comp = function(i1, i2)
     if not rnd[i1] then
       rnd[i1] = math.random()
     end
@@ -602,7 +602,7 @@ function utils.sort(tab)
     end
     return rnd[i1] < rnd[i2]
   end
-  table.sort(tab, cmp)
+  table.sort(tab, comp)
 end
 
 require 'src.text' (utils) -- à généraliser

@@ -193,7 +193,7 @@ local gameState = {
             end
             if #candidates >= self.articleTodoCount then
               -- s'il y a assez d'article pour faire un magasine on converti au hasard le nombre d'article attendu
-              utils.sort(candidates)
+              utils.shuffle(candidates)
               for i = 0, self.articleTodoCount do
                 local cell = table.remove(candidates);
                 cell.h = math.min(cell.h + 1, 10)
