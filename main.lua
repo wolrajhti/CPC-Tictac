@@ -429,6 +429,9 @@ function love.keypressed(key)
   end
   if key == 'escape' then
     if love.window.getFullscreen() then
+      if gameState.state == 'RUNNING' then
+        gameState.state = 'PAUSE'
+      end
       love.window.setFullscreen(false)
       setSize(love.graphics.getDimensions())
     else

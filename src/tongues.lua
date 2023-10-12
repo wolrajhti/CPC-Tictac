@@ -1,6 +1,6 @@
 local function updateTongue(self, dt) -- body state
   self.t = self.t + dt
-  if self.t > 3 then
+  if self.t > 5 then
     self.current = nil
   end
 end
