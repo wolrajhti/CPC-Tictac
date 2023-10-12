@@ -591,6 +591,20 @@ function utils.findNearest(agents, cell)
   end
 end
 
+function utils.sort(tab)
+  local rnd = {}
+  local function comp(i1, i2)
+    if not rnd[i1] then
+      rnd[i1] = math.random()
+    end
+    if not rnd[i2] then
+      rnd[i2] = math.random()
+    end
+    return rnd[i1] < rnd[i2]
+  end
+  table.sort(tab, cmp)
+end
+
 require 'src.text' (utils) -- à généraliser
 
 utils.initCells() -- ULTRA SALE

@@ -192,20 +192,30 @@ local gameState = {
               end
             end
             if #candidates >= self.articleTodoCount then
-              for i, cell in ipairs(candidates) do
+              -- s'il y a assez d'article pour faire un magasine on converti au hasard le nombre d'article attendu
+              utils.sort(candidates)
+              for i = 0, self.articleTodoCount do
+                local cell = table.remove(candidates);
                 cell.h = math.min(cell.h + 1, 10)
-                self:setMoney(self.money + 2)
+                self:setMoney(self.money + 2) -- chaque article rapporte 2 billets
                 table.remove(cell.objs, #cell.objs)
               end
-              self:setArticleCount(0)
+              self:setArticleCount(self.articleCount - self.articleTodoCount)
               self:setMagCount(self.magCount + 1)
-              if #candidates > self.articleTodoCount + 1 then -- si trop de production => le patronnat prend ça pour acquis
+              if #candidates > 0 then
+                -- si trop de production => le patronnat prend ça pour acquis
                 self:setArticleTodoCount(self.articleTodoCount + 1)
               end
             else
-              -- on perd 1 par article fait non transformé
-              self:setMoney(self.money - #candidates)
+              -- si aucun magasine n'est produit dans le mois, ça stresse les rédacteurs
+              for i, agent in ipairs(self.agents) do
+                if i ~= 1 then
+                  agent.stress = math.min(agent.stress + 1, 8)
+                end
+              end
             end
+            -- on perd 1 par article fait non transformé
+            self:setMoney(self.money - #candidates)
             if needsUpdate then
               self.aimingObs = utils.heightThreshold(self.cell)
             end
