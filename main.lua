@@ -46,8 +46,6 @@ local texts = {
   article = utils.text.init(fonts.default, ""),
   mag = utils.text.init(fonts.default, ""),
   gameOver = utils.text.init(fonts.default, "GAME OVER"),
-
-
   home = utils.text.init(fonts.default, "an Air Pigiste game for the \"Make Something Horrible, l'edition des 20 ans\" by Wolrajhti"),
 }
 
@@ -204,6 +202,9 @@ local gameState = {
               if #candidates > self.articleTodoCount + 1 then -- si trop de production => le patronnat prend ça pour acquis
                 self:setArticleTodoCount(self.articleTodoCount + 1)
               end
+            else
+              -- on perd 1 par article fait non transformé
+              self:setMoney(self.money - #candidates)
             end
             if needsUpdate then
               self.aimingObs = utils.heightThreshold(self.cell)
@@ -231,7 +232,7 @@ local gameState = {
         if self.agents[i].state == 'leaving' and self.agents[i].t == 1 then
           utils.remove(self.agents[i].to.agents, self.agents[i])
           table.remove(self.agents, i)
-          if #self.agents == 0 then
+          if #self.agents == 1 then
             self:gameOver()
           end
         end
