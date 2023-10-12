@@ -18,8 +18,8 @@ function setSize(w, h)
   )
   utils.ox, utils.oy = (utils.W - utils.bw * utils.ratio) / 2,
                        (utils.H - utils.bh * utils.ratio) / 2
-  utils.cw = 16
-  utils.ch = 8
+  utils.cw = 16 * utils.ratio
+  utils.ch = 8 * utils.ratio
   utils.sy = .5
 end
 

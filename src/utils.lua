@@ -202,13 +202,13 @@ function utils.heightThreshold(cell)
 end
 
 function utils.worldCoordinates(x, y)
-  return utils.ox + x * utils.cw * utils.ratio,
-         utils.oy + y * utils.ch * utils.ratio
+  return utils.ox + x * utils.cw,
+         utils.oy + y * utils.ch
 end
 
 function utils.cellCoordinates(x, y)
-  return math.floor(((x - utils.ox) + .5 * utils.cw * utils.ratio) / (utils.cw * utils.ratio)),
-         math.floor(((y - utils.oy) + .5 * utils.ch * utils.ratio) / (utils.ch * utils.ratio))
+  return math.floor(((x - utils.ox) + .5 * utils.cw) / (utils.cw)),
+         math.floor(((y - utils.oy) + .5 * utils.ch) / (utils.ch))
 end
 
 function utils.initImage(filename, ox, oy)
@@ -516,10 +516,10 @@ function utils.drawWalkingAreas()
     x, y = utils.worldCoordinates(wa.x, wa.y)
     love.graphics.rectangle(
       'fill',
-      x - .5 * utils.cw * utils.ratio,
-      y - .5 * utils.ch * utils.ratio,
-      wa.w * utils.cw * utils.ratio,
-      wa.h * utils.ch * utils.ratio
+      x - .5 * utils.cw,
+      y - .5 * utils.ch,
+      wa.w * utils.cw,
+      wa.h * utils.ch
     )
   end
   utils.setColor()
@@ -531,10 +531,10 @@ function utils.drawLine(y, pos, width)
   x, y = utils.worldCoordinates(pos, y)
   love.graphics.rectangle(
     'fill',
-    x - .5 * utils.cw * utils.ratio,
-    y - .5 * utils.ch * utils.ratio,
-    width * utils.cw * utils.ratio,
-    1 * utils.ch * utils.ratio
+    x - .5 * utils.cw,
+    y - .5 * utils.ch,
+    width * utils.cw,
+    1 * utils.ch
   )
   utils.setColor()
 end
