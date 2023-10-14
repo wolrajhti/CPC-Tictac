@@ -144,7 +144,7 @@ local gameState = {
   aimingObs = {},
   updateCell = function(self, x, y)
     if self.state ~= 'PAUSE' then
-      self.cell = utils.cellAt(utils.cellCoordinates(x, y))
+      self.cell = utils.cellAt(utils:cellCoordinates(x, y))
       self.aimingObs = utils.heightThreshold(self.cell) -- TODO à maj en temps réel
     end
   end,
@@ -185,7 +185,7 @@ local gameState = {
                   local p = table.remove(cell.objs, #cell.objs)
                   p.exploding = false
                   p.update = utils.updatePlane
-                  p.animations = {exploding = utils.copyAnimation(self.data.exploding)}
+                  p.animations = {exploding = self.data.exploding:copy()}
                   p.animations.exploding.t = 0
                   table.insert(cell.missed, p)
                 end
@@ -293,7 +293,7 @@ local gameState = {
       table.insert(self.aimingObs[h].cell.flying, p)
     else
       p.exploding = false
-      p.animations = {exploding = utils.copyAnimation(self.data.exploding)}
+      p.animations = {exploding = self.data.exploding:copy()}
       p.animations.exploding.t = 0
       table.insert(self.aimingObs[h].cell.missed, p)
     end
@@ -323,18 +323,18 @@ love.graphics.setFont(fonts.default)
 function love.draw()
   love.graphics.setColor(1, 1, 1)
 
-  utils.drawImage(gameState.data.background, utils.OX, utils.OY)
-  utils.drawQuad(gameState.data.logos, utils.OX, utils.OY)
-  utils.drawQuad(gameState.data.waves, utils.OX, utils.OY)
+  gameState.data.background:draw(utils.ratio, utils.OX, utils.OY)
+  gameState.data.logos:draw(utils.ratio, utils.OX, utils.OY)
+  gameState.data.waves:draw(utils.ratio, utils.OX, utils.OY)
 
   if #gameState.door.cell.agents ~= 0 then
-    utils.drawImage(gameState.data.door, utils.OX, utils.OY)
+    gameState.data.door:draw(utils.ratio, utils.OX, utils.OY)
   end
 
   utils.drawCalendar(gameState)
 
   if gameState.state ~= 'IDLE' then
-    utils.text.draw(gameState.texts.article, utils.worldCoordinates(7, 14))
+    utils.text.draw(gameState.texts.article, utils:worldCoordinates(7, 14))
   end
   -- utils.drawWalkingAreas()
 
@@ -345,40 +345,36 @@ function love.draw()
   utils.drawCells(gameState)
 
   if ivan.state ~= 'walking' and gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
-    utils.drawQuad(gameState.data.cursor, utils.worldCoordinates(gameState.cell.x, gameState.cell.y))
+    gameState.data.cursor:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x, gameState.cell.y))
     if gameState.state ~= 'IDLE' or gameState.aiming then
-      utils.drawQuad(gameState.data.ruler, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
+      gameState.data.ruler:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
       love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
       for i = 9, 0, -1 do
         if gameState.aimingObs[i].onTop == true then -- à ajuster
-        --   love.graphics.setColor(233 / 255, 54 / 255, 54 / 255)
-        -- else
-        --   love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
-          utils.drawQuad(gameState.data.tick, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy - i * utils.sy))
+          gameState.data.tick:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy - i * utils.sy))
         end
       end
       love.graphics.setColor(1, 1, 1)
-      -- utils.drawQuad(goal, utils.worldCoordinates(gameState.cell.x, gameState.cell.y - gameState.cell.h))
       if gameState.aiming then
-        utils.drawQuad(gameState.data.target, utils.worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy + gameState.offset * utils.sy))
+        gameState.data.target:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy + gameState.offset * utils.sy))
       end
     end
   end
 
-  utils.drawImage(gameState.data.foreground, utils.OX, utils.OY)
+  gameState.data.foreground:draw(utils.ratio, utils.OX, utils.OY)
 
   if gameState.state ~= 'IDLE' then
     if gameState.money > 0 then
-      local dx, dy = utils.worldCoordinates(4, 1)
-      utils.drawQuad(gameState.data.dollarStart, dx, dy)
+      local dx, dy = utils:worldCoordinates(4, 1)
+      gameState.data.dollarStart:draw(utils.ratio, dx, dy)
       for i = 0, math.min(200, gameState.money) - 1 do
-        utils.drawQuad(gameState.data.dollarStack[(i - 1 + (gameState.money % #gameState.data.dollarStack)) % #gameState.data.dollarStack + 1], dx + (i + 1) * utils.ratio, dy)
+        gameState.data.dollarStack[(i - 1 + (gameState.money % #gameState.data.dollarStack)) % #gameState.data.dollarStack + 1]:draw(utils.ratio, dx + (i + 1) * utils.ratio, dy)
       end
-      utils.drawQuad(gameState.data.dollarEnd, dx + (math.min(200, gameState.money) - 1) * utils.ratio, dy)
+      gameState.data.dollarEnd:draw(utils.ratio, dx + (math.min(200, gameState.money) - 1) * utils.ratio, dy)
     end
 
-    utils.text.draw(gameState.texts.money, utils.worldCoordinates(5, 1.5))
-    utils.text.draw(gameState.texts.mag, utils.worldCoordinates(5, 2.5))
+    utils.text.draw(gameState.texts.money, utils:worldCoordinates(5, 1.5))
+    utils.text.draw(gameState.texts.mag, utils:worldCoordinates(5, 2.5))
   end
 
   if gameState.state == 'PAUSE' then
@@ -391,7 +387,7 @@ function love.draw()
   elseif gameState.state == 'GAME_OVER' then
     utils.text.drawTitle(gameState.texts.gameOver, utils.OX, utils.OY)
   elseif gameState.state == 'IDLE' then
-    utils.text.drawSmall(gameState.texts.home, utils.worldCoordinates(10, 24))
+    utils.text.drawSmall(gameState.texts.home, utils:worldCoordinates(10, 24))
   end
 end
 

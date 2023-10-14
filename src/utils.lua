@@ -122,10 +122,10 @@ function utils.drawCells(gameState) -- beurk beurk beurk
         love.graphics.setColor(r, g, b, .2)
       end
       if cell.h ~= 0 and cell.redacWalkable then
-        utils.drawQuad(gameState.data.mags[cell.h], utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy))
+        gameState.data.mags[cell.h]:draw(utils.ratio, utils:worldCoordinates(cell.x + cell.ox, cell.y + cell.oy)) -- il faudrait avoir cx, cy et x, y (= cx + ox, cy + oy)
       end
       for j, obj in ipairs(cell.objs) do
-        utils.drawQuad(obj.quad, utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy - cell.h * utils.sy))
+        obj.quad:draw(utils.ratio, utils:worldCoordinates(cell.x + cell.ox, cell.y + cell.oy - cell.h * utils.sy))
       end
       if gameState.cell and gameState.cell.y < cell.y then
         utils.setColor()
@@ -137,13 +137,13 @@ function utils.drawCells(gameState) -- beurk beurk beurk
       end
     end
     for j, flying in ipairs(cell.flying) do
-      utils.drawQuad(flying.quad, utils.worldCoordinates(flying.x, flying.y))
+      flying.quad:draw(utils.ratio, utils:worldCoordinates(flying.x, flying.y))
     end
     for j, missed in ipairs(cell.missed) do
-      utils.drawQuad(missed.quad, utils.worldCoordinates(missed.x, missed.y))
+      missed.quad:draw(utils.ratio, utils:worldCoordinates(missed.x, missed.y))
     end
     -- if gameState.cell and gameState.cell.walkable and cell.walkable and gameState.cell.y == cell.y then
-    --   love.graphics.print(cell.x - gameState.cell.x..' '..cell.h, utils.worldCoordinates(cell.x + cell.ox, cell.y + cell.oy))
+    --   love.graphics.print(cell.x - gameState.cell.x..' '..cell.h, utils:worldCoordinates(cell.x + cell.ox, cell.y + cell.oy))
     -- end
   end
 end
@@ -201,76 +201,14 @@ function utils.heightThreshold(cell)
   return obs
 end
 
-function utils.worldCoordinates(x, y)
-  return utils.ox + x * utils.cw,
-         utils.oy + y * utils.ch
+function utils.worldCoordinates(self, x, y)
+  return self.ox + x * self.cw,
+         self.oy + y * self.ch
 end
 
-function utils.cellCoordinates(x, y)
-  return math.floor(((x - utils.ox) + .5 * utils.cw) / (utils.cw)),
-         math.floor(((y - utils.oy) + .5 * utils.ch) / (utils.ch))
-end
-
-function utils.initImage(filename, ox, oy)
-  local image = love.graphics.newImage(filename)
-  local w, h = image:getDimensions()
-  return {
-    image = image,
-    w = w, -- à supprimer si useless
-    h = h, -- à supprimer si useless
-    ox = ox or w / 2,
-    oy = oy or h / 2
-  }
-end
-
-function utils.initQuad(texture, x, y, width, height, ox, oy)
-  return {
-    texture = texture,
-    quad = love.graphics.newQuad(x, y, width, height, texture:getDimensions()),
-    ox = ox or width / 2,
-    oy = oy or height / 2
-  }
-end
-
-function utils.updateAnimationLoop(self, dt)
-  self.t = utils.updateTimeLoop(self.t, self.speed, dt)
-  self.texture = self.frames[math.floor(#self.frames * self.t) + 1]
-end
-
-function utils.updateAnimation(self, dt)
-  self.t = utils.updateTime(self.t, self.speed, dt)
-  self.texture = self.frames[math.min(#self.frames, math.floor(#self.frames * self.t) + 1)]
-end
-
-function utils.initAnimation(frames, speed, x, y, width, height, ox, oy, once)
-  if not width then
-    width, height = frames[1]:getDimensions()
-  end
-  return {
-    t = love.math.random(),
-    update = utils.ternary(once, utils.updateAnimation, utils.updateAnimationLoop),
-    speed = speed,
-    texture = frames[1],
-    frames = frames,
-    quad = love.graphics.newQuad(x or 0, y or 0, width, height, frames[1]:getDimensions()),
-    ox = ox or width / 2,
-    oy = oy or height / 2,
-    once = once
-  }
-end
-
-function utils.copyAnimation(animation)
-  return {
-    t = animation.t,
-    update = animation.update,
-    speed = animation.speed,
-    texture = animation.frames[1],
-    frames = animation.frames,
-    quad = animation.quad,
-    ox = animation.ox,
-    oy = animation.oy,
-    once = animation.once
-  }
+function utils.cellCoordinates(self, x, y)
+  return math.floor(((x - self.ox) + .5 * self.cw) / (self.cw)),
+         math.floor(((y - self.oy) + .5 * self.ch) / (self.ch))
 end
 
 function utils.initAgent(x, y, tongue, animations, stress)
@@ -335,14 +273,6 @@ function utils.initPath(x1, y1, x2, y2)
       return utils.linearInterpolation(x1, x2, t), utils.linearInterpolation(y1, y2, t)
     end
   }
-end
-
-function utils.drawImage(data, x, y)
-  love.graphics.draw(data.image, x, y, 0, utils.ratio, utils.ratio, data.ox, data.oy)
-end
-
-function utils.drawQuad(data, x, y, reverse) -- reverse pas terrible
-  love.graphics.draw(data.texture, data.quad, x, y, 0, utils.ternary(reverse, -1, 1) * utils.ratio, utils.ratio, data.ox, data.oy)
 end
 
 function utils.ternary(cond, T, F)
@@ -472,17 +402,17 @@ function utils.updateAgent(agent, dt, gameState)
 end
 
 function utils.drawAgent(agent, gameState)
-  local sx, sy = utils.worldCoordinates(agent.x, agent.y)
-  utils.drawQuad(agent.animations.body[agent.state], sx, sy, agent.reverse)
-  utils.drawQuad(agent.animations.head[agent.headState], sx, sy, agent.reverse)
+  local sx, sy = utils:worldCoordinates(agent.x, agent.y)
+  agent.animations.body[agent.state]:draw(utils.ratio, sx, sy, agent.reverse)
+  agent.animations.head[agent.headState]:draw(utils.ratio, sx, sy, agent.reverse)
   if agent.isAckboo then
-    utils.drawQuad(agent.animations.item[agent.itemState], sx, sy, agent.reverse)
+    agent.animations.item[agent.itemState]:draw(utils.ratio, sx, sy, agent.reverse)
   end
   if agent.tongue.current then
     utils.text.drawSpeak(agent.tongue, sx, sy)
   end
   if agent.stress > 0 then
-    utils.drawQuad(gameState.data.stress[agent.stress], sx, sy)
+    gameState.data.stress[agent.stress]:draw(utils.ratio, sx, sy)
   end
 end
 
@@ -513,7 +443,7 @@ function utils.drawWalkingAreas()
   utils.getColor()
   love.graphics.setColor(1, .7, .7, .5)
   for i, wa in ipairs(utils.walkableAreas) do
-    x, y = utils.worldCoordinates(wa.x, wa.y)
+    x, y = utils:worldCoordinates(wa.x, wa.y)
     love.graphics.rectangle(
       'fill',
       x - .5 * utils.cw,
@@ -528,7 +458,7 @@ end
 function utils.drawLine(y, pos, width)
   utils.getColor()
   love.graphics.setColor(.1, .1, .1, .2)
-  x, y = utils.worldCoordinates(pos, y)
+  x, y = utils:worldCoordinates(pos, y)
   love.graphics.rectangle(
     'fill',
     x - .5 * utils.cw,
