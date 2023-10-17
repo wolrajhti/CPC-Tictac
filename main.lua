@@ -273,7 +273,9 @@ local gameState = {
     end
     self.aimingObs = utils.heightThreshold(self.cell)
     ivan.state = 'idle'
-    ivan.tongue:aim()
+    if love.math.random() < .2 then
+      ivan.tongue:aim()
+    end
     local h = - utils.round(self.offset) -- entre 0 et 10
     -- print('h = '..h..'('..self.cell.y..' - '..utils.round(self.y)..') raw y = '.. self.y)
     local p = {
@@ -344,6 +346,24 @@ function love.draw()
 
   utils.drawCells(gameState)
 
+  gameState.data.foreground:draw(utils.ratio, utils.OX, utils.OY)
+
+  if gameState.state ~= 'IDLE' then
+    if gameState.money > 0 then
+      local dx, dy = utils:worldCoordinates(4, 1)
+      gameState.data.dollarStart:draw(utils.ratio, dx, dy)
+      for i = 0, math.min(200, gameState.money) - 1 do
+        gameState.data.dollarStack[(i - 1 + (gameState.money % #gameState.data.dollarStack)) % #gameState.data.dollarStack + 1]:draw(utils.ratio, dx + (i + 1) * utils.ratio, dy)
+      end
+      gameState.data.dollarEnd:draw(utils.ratio, dx + (math.min(200, gameState.money) - 1) * utils.ratio, dy)
+    end
+
+    utils.text.draw(gameState.texts.money, utils:worldCoordinates(5, 1.5))
+    utils.text.draw(gameState.texts.mag, utils:worldCoordinates(5, 2.5))
+  end
+
+  utils.drawTexts(gameState)
+
   if ivan.state ~= 'walking' and gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
     gameState.data.cursor:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x, gameState.cell.y))
     if gameState.state ~= 'IDLE' or gameState.aiming then
@@ -359,22 +379,6 @@ function love.draw()
         gameState.data.target:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy + gameState.offset * utils.sy))
       end
     end
-  end
-
-  gameState.data.foreground:draw(utils.ratio, utils.OX, utils.OY)
-
-  if gameState.state ~= 'IDLE' then
-    if gameState.money > 0 then
-      local dx, dy = utils:worldCoordinates(4, 1)
-      gameState.data.dollarStart:draw(utils.ratio, dx, dy)
-      for i = 0, math.min(200, gameState.money) - 1 do
-        gameState.data.dollarStack[(i - 1 + (gameState.money % #gameState.data.dollarStack)) % #gameState.data.dollarStack + 1]:draw(utils.ratio, dx + (i + 1) * utils.ratio, dy)
-      end
-      gameState.data.dollarEnd:draw(utils.ratio, dx + (math.min(200, gameState.money) - 1) * utils.ratio, dy)
-    end
-
-    utils.text.draw(gameState.texts.money, utils:worldCoordinates(5, 1.5))
-    utils.text.draw(gameState.texts.mag, utils:worldCoordinates(5, 2.5))
   end
 
   if gameState.state == 'PAUSE' then

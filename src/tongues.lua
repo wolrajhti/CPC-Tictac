@@ -1,33 +1,43 @@
+local COUNT = 0;
+local MAX = 3;
+
 local function updateTongue(self, dt) -- body state
   self.t = self.t + dt
-  if self.t > 5 then
+  if self.t > 6 then
     self.current = nil
+    COUNT = COUNT - 1
   end
 end
 
 local function work(self)
-  if not self.current and #self.texts.work > 0 then
+  if COUNT < MAX and not self.current and #self.texts.work > 0 then
     self.current = self.texts.work[love.math.random(1, #self.texts.work)]
     self.t = 0
+    COUNT = COUNT + 1
   end
 end
 
 local function leaving(self)
-  self.current = self.texts.leaving[love.math.random(1, #self.texts.leaving)]
-  self.t = 0
+  if COUNT < MAX then
+    self.current = self.texts.leaving[love.math.random(1, #self.texts.leaving)]
+    self.t = 0
+    COUNT = COUNT + 1
+  end
 end
 
 local function random(self)
-  if not self.current and #self.texts.random > 0 then
+  if COUNT < MAX and not self.current and #self.texts.random > 0 then
     self.current = self.texts.random[love.math.random(1, #self.texts.random)]
     self.t = 0
+    COUNT = COUNT + 1
   end
 end
 
 local function aim(self)
-  if not self.current and #self.texts.aim > 0 then
+  if COUNT < MAX and not self.current and #self.texts.aim > 0 then
     self.current = self.texts.aim[love.math.random(1, #self.texts.aim)]
     self.t = 0
+    COUNT = COUNT + 1
   end
 end
 
@@ -60,7 +70,7 @@ local loadTongues = function(fonts)
           "Et haut les coeurs",
           "J'attend ton retour ASAP",
           "Chaud devant !",
-          "J'arrivai pas a te joindre, t'es en\nweekend un samedi ?!"
+          "J'arrivais pas a te joindre, t'es en\nweekend un samedi ?!"
         }
       },
       update = updateTongue,
@@ -206,7 +216,7 @@ local loadTongues = function(fonts)
         work = {
           "Si vous avez une PS5 et 20H devant vous\nfoncez 8/10",
           "Moi j'ai trouve ca pas mal 6/10",
-          "Des zombies qui mangent des ratons-laveurs,\nfranchement peut-on rêver mieux ?\n10/10",
+          "Des zombies qui mangent des ratons-laveurs,\nfranchement peut-on rever mieux ?\n10/10",
           "A les moyens de ses ambitions 9/10",
           "Va-t-il transformer l'essai ? ?/10",
           "Tres Ibura Sataki dans l'esprit ... 7/10",
@@ -227,7 +237,7 @@ local loadTongues = function(fonts)
           "...Henry Mac Guire dans STOMP IV bien sur. evidemment ...",
           "Ah oui comme John Brossvitch ! Ses jeunes\nannees on est d'accord",
           "Calmez vous les enfants",
-          "(Ellen tu es la redactrice en chef, il faut que\ntu lui explique qu'il ne peut copier sur le\ntest de son voisin)",
+          "(Ellen tu es la redactrice en chef, il faut que\ntu lui expliques qu'il ne peut copier sur le\ntest de son voisin)",
           "Ackboo on avait dit pas les mamans !",
           "Ackboo lache ca !",
           "Ackboo range ce truc",
@@ -244,6 +254,5 @@ local loadTongues = function(fonts)
     }
   }
 end
-
 
 return loadTongues

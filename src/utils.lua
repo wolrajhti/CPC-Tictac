@@ -148,6 +148,14 @@ function utils.drawCells(gameState) -- beurk beurk beurk
   end
 end
 
+function utils.drawTexts(gameState)
+  for i, cell in ipairs(utils.orderedCells) do
+    for i, agent in ipairs(cell.agents) do
+      utils.drawText(agent, gameState)
+    end
+  end
+end
+
 function utils.cellIsEmpty(self)
   return #self.objs + #self.agents + #self.flying == 0
 end
@@ -380,7 +388,7 @@ function utils.updateAgent(agent, dt, gameState)
     agent.target = nil
     agent.stress = math.min(agent.stress + 1, 8)
     agent.state = 'idle'
-    if love.math.random() < .2 * dt then
+    if love.math.random() < 50 * dt then
       agent.tongue:work()
     end
   end
@@ -390,7 +398,7 @@ function utils.updateAgent(agent, dt, gameState)
     if love.math.random() < .1 * dt then
       agent.headState = 'blink'
       agent.animations.head.blink.t = 0
-    elseif love.math.random() < .05 * dt then
+    elseif love.math.random() < .025 * dt then
       agent.tongue:random()
     end
   elseif agent.headState ~= 'cry' then
@@ -408,11 +416,15 @@ function utils.drawAgent(agent, gameState)
   if agent.isAckboo then
     agent.animations.item[agent.itemState]:draw(utils.ratio, sx, sy, agent.reverse)
   end
-  if agent.tongue.current then
-    utils.text.drawSpeak(agent.tongue, sx, sy)
-  end
   if agent.stress > 0 then
     gameState.data.stress[agent.stress]:draw(utils.ratio, sx, sy)
+  end
+end
+
+function utils.drawText(agent, gameState)
+  if agent.tongue.current then
+    local sx, sy = utils:worldCoordinates(agent.x, agent.y)
+    utils.text.drawSpeak(agent.tongue, sx, sy)
   end
 end
 
