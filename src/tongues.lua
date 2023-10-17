@@ -224,7 +224,7 @@ local loadTongues = function(fonts)
           "Le crunch peut donner de bons resultats\n8/10",
           "Le 1er jeu pour homme tronc.. helas tres chiant\nil faut dire, desole.. 2/10",
           "Hyper interessant et permet d'apprehender\nl'approche systemique tellement 90s\nde Nakato TAKAMITO",
-          "Sympa ces amateurs de rencontres \"IRL\",\nj'espere que l'article vous plaira",
+          "Sympas ces amateurs de rencontres \"IRL\",\nj'espere que l'article vous plaira",
           "Detrompez vous la figure du chien a beaucoup evolue\ndans la vision occidentale des shooters COOP."
         },
         leaving = {
