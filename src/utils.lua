@@ -388,7 +388,7 @@ function utils.updateAgent(agent, dt, gameState)
     agent.target = nil
     agent.stress = math.min(agent.stress + 1, 8)
     agent.state = 'idle'
-    if love.math.random() < 50 * dt then
+    if love.math.random() < 10 * dt then
       agent.tongue:work()
     end
   end
