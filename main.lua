@@ -4,68 +4,42 @@ love.graphics.setDefaultFilter('nearest', 'nearest')
 -- sprites
 local utils = require 'src.utils'
 local loader = require 'src.loader'
-local data = loader(utils)
+local Agent = require 'src.agent'
+local Plane = require 'src.plane'
 
-utils.bw, utils.bh = data.background.image:getDimensions()
+local data = loader.load()
 
-function setSize(w, h)
-  utils.W, utils.H = w, h
-  utils.OX, utils.OY = utils.W / 2, utils.H / 2
-  utils.ratio = utils.ternary(
-    utils.W / utils.H < utils.bw / utils.bh,
-    utils.W / utils.bw,
-    utils.H / utils.bh
-  )
-  utils.ox, utils.oy = (utils.W - utils.bw * utils.ratio) / 2,
-                       (utils.H - utils.bh * utils.ratio) / 2
-  utils.cw = 16 * utils.ratio
-  utils.ch = 8 * utils.ratio
-  utils.sy = .5
-end
+utils:setBackgroundImage(data.background)
+utils:setSize(love.graphics.getDimensions())
 
-setSize(love.graphics.getDimensions())
-
--- fonts
-local fonts = {
-  default = love.graphics.newImageFont('assets/fonts/Resource-Imagefont.png',
-    " abcdefghijklmnopqrstuvwxyz" ..
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0" ..
-    "123456789.,!?-+/():;%&`'*#=[]\""
-  ),
-  ackboo = love.graphics.newFont('assets/fonts/comic-sans-ms/ComicSansMS3.ttf'),
-  izual = love.graphics.newFont('assets/fonts/upheaval/upheavtt.ttf', 20),
-  sebum = love.graphics.newFont('assets/fonts/alagard.ttf', 24)
-}
-fonts.ivan = fonts.default
-fonts.ellen = fonts.default
-
-local texts = {
-  start = utils.text.init(fonts.default, "C'est partiiii !"),
-  pause = utils.text.init(fonts.default, ""),
-  money = utils.text.init(fonts.default, ""),
-  article = utils.text.init(fonts.default, ""),
-  mag = utils.text.init(fonts.default, ""),
-  gameOver = utils.text.init(fonts.default, "GAME OVER"),
-  home = utils.text.init(fonts.default, "a Tactical Air Pigiste game for the \"Make Something Horrible, l'edition des 20 ans\" by Wolrajhti"),
-}
-
-local loadTongues = require 'src.tongues'
-local tongues = loadTongues(fonts)
-
-local ivan = utils.initAgent(2, 7, tongues.ivan, data.ivanAnimations, 0)
+local ivan = Agent.new(2, 7, data.ivanSpeaks, data.ivanAnimations)
 ivan.isIvan = true
-local ackboo = utils.initAgent(6, 20, tongues.ackboo, data.ackbooAnimations)
+local ackboo = Agent.new(6, 20, data.ackbooSpeaks, data.ackbooAnimations)
 ackboo.isAckboo = true
-local izual = utils.initAgent(9, 20, tongues.izual, data.izualAnimations)
-local sebum = utils.initAgent(12, 20, tongues.sebum, data.sebumAnimations)
-local ellen = utils.initAgent(13, 18, tongues.ellen, data.ellenAnimations)
+local izual = Agent.new(9, 20, data.izualSpeaks, data.izualAnimations)
+local sebum = Agent.new(12, 20, data.sebumSpeaks, data.sebumAnimations)
+local ellen = Agent.new(13, 18, data.ellenSpeaks, data.ellenAnimations)
+
+local world = World.new({
+  -- ivan
+  {x = 1, y = 2, w = 1, h = 6},
+  {x = 2, y = 3, w = 1, h = 5},
+  {x = 3, y = 5, w = 1, h = 2},
+  -- door
+  {x = 13, y = 17, w = 1, h = 1}
+}, {
+  -- redac
+  {x = 3, y = 18, w = 15, h = 3},
+  {x = 2, y = 21, w = 17, h = 2},
+  {x = 1, y = 23, w = 19, h = 2},
+})
 
 local cell
 local aiming = false
 
 local gameState = {
   state = 'IDLE',
-  texts = texts,
+  quotes = data.quotes.default,
   -- start
   startTimer = 0,
   startOffsetY = 0,
@@ -86,13 +60,13 @@ local gameState = {
   end,
   setPauseTimer = function(self, time)
     self.pauseTimer = time
-    self.texts.pause = utils.text.init(fonts.default, os.date("Reprise du direct dans %M:%S", time))
+    self.quotes.pause:set(os.date("Reprise du direct dans %M:%S", time))
   end,
   -- money
   money = 0,
   setMoney = function(self, sum)
     self.money = math.max(0, sum)
-    self.texts.money = utils.text.init(fonts.default, string.format("x%d", math.max(0, sum)), 0)
+    self.quotes.money:set(string.format("x%d", math.max(0, sum)), 0)
     if self.money == 0 then
       self:gameOver()
     end
@@ -100,47 +74,39 @@ local gameState = {
   magCount = 0,
   setMagCount = function(self, count)
     self.magCount = count
-    self.texts.mag = utils.text.init(fonts.default, string.format("numero %03d", count), 0)
+    self.quotes.mag:set(string.format("numero %03d", count), 0)
   end,
   -- article
   articleCount = 0,
   articleTodoCount = 10,
   setArticleCount = function(self, count)
     self.articleCount = count
-    self.texts.article = utils.text.init(fonts.default, string.format("%d/%d", count, self.articleTodoCount))
+    self.quotes.article:set(string.format("%d/%d", count, self.articleTodoCount))
   end,
   setArticleTodoCount = function(self, countTodo)
     self.articleTodoCount = countTodo
-    self.texts.article = utils.text.init(fonts.default, string.format("%d/%d", self.articleCount, countTodo))
+    self.quotes.article:set(string.format("%d/%d", self.articleCount, countTodo))
   end,
   -- gameOver
   gameOver = function(self)
     self.state = 'GAME_OVER'
   end,
-  -- à cleaner
-  DEBUG_T = nil,
   data = data, -- contient les images, quads et animations
   AIMING_WINDOW = 6, -- temps laissé au joueur pour viser
-  PX1 = -2, PY1 = 15, -- départ des avions
-  FLYING_SPEED_MIN = 10, -- vitesse des avions (variable ?)
-  FLYING_SPEED_MAX = 30, -- vitesse des avions (variable ?)
   cell, -- case survolée
   aiming, -- bool
   aimingSpeed, -- vitesse de déplacement du viseur
   t0, t, -- date de début de la visé et date actuelle
   offset = 0, -- position du viseur
-  day = 1,
-  time = 0,
-  TIME_SPEED = 2, -- à ajuster
-  CALENDAR_CELLS = {
+  calendar = Calendar.new(2, {
                             {131, 110}, {133, 110}, {135, 110}, {137, 110}, {139, 110},
     {127, 112}, {129, 112}, {131, 112}, {133, 112}, {135, 112}, {137, 112}, {139, 112},
     {127, 114}, {129, 114}, {131, 114}, {133, 114}, {135, 114}, {137, 114}, {139, 114},
     {127, 116}, {129, 116}, {131, 116}, {133, 116}, {135, 116}, {137, 116}, {139, 116},
     {127, 118}, {129, 118}, {131, 118}, {133, 118}
-  },
+  }),
   agents = {ivan, ackboo, izual, sebum, ellen},
-  door = {image = door, cell = utils.cellAt(13, 17), ox = .5},
+  door = {image = door, cell = utils.cellAt(13, 17)},
   aimingObs = {},
   updateCell = function(self, x, y)
     if self.state ~= 'PAUSE' then
@@ -154,26 +120,14 @@ local gameState = {
         if self.startTimer < 2 then
           self:updateStartTimer(dt)
         end
-        self.time = self.time + self.TIME_SPEED * dt
-        while self.time > 1 do
-          self.time = self.time - 1
-          self.day = self.day + 1
-          if self.day > 30 then
-            self.day = self.day - 30
-          end
-          self.endOfTheMonth = self.day == 30
-          self.weekend = self.day == 6 or-- self.day == 7 or
-                        self.day == 13 or-- self.day == 14 or
-                        self.day == 20 or-- self.day == 21 or
-                        self.day == 27-- or self.day == 28
-          if self.weekend then
+        for i, event in ipairs(self.calendar:update(dt)) do
+          if event == 'weekend' then
             for i, agent in ipairs(self.agents) do
               if i ~= 1 and agent.state ~= 'leaving' then -- ivan (bof bof ...)
-                agent.stress = math.min(math.max(0, agent.stress - 1), 8)
+                agent:relax()
               end
             end
-          end
-          if self.endOfTheMonth then
+          elseif event == 'endOfTheMonth' then
             local candidates = {}
             local needsUpdate = false
             for i, cell in ipairs(utils.orderedCells) do
@@ -210,7 +164,7 @@ local gameState = {
               -- si aucun magasine n'est produit dans le mois, ça stresse les rédacteurs
               for i, agent in ipairs(self.agents) do
                 if i ~= 1 then
-                  agent.stress = math.min(agent.stress + 1, 8)
+                  agent:getWorried()
                 end
               end
             end
@@ -224,7 +178,7 @@ local gameState = {
       end
 
       if self.aiming then
-        self.t = self.DEBUG_T or (self.t + self.aimingSpeed * dt)
+        self.t = self.t + self.aimingSpeed * dt
         local u = self.t % 2
         if u > 1 then
           self.offset = -10 * (2 - u)
@@ -250,7 +204,6 @@ local gameState = {
 
       self.data.logos:update(dt)
       self.data.waves:update(dt)
-      -- self.data.clouds:update(dt)
 
       utils.updateCells(dt, self)
     else
@@ -277,16 +230,13 @@ local gameState = {
       ivan.tongue:aim()
     end
     local h = - utils.round(self.offset) -- entre 0 et 10
-    -- print('h = '..h..'('..self.cell.y..' - '..utils.round(self.y)..') raw y = '.. self.y)
-    local p = {
-      x1 = self.PX1,
-      y1 = self.PY1,
-      speed = love.math.random(self.FLYING_SPEED_MIN, self.FLYING_SPEED_MAX),
-    }
     -- il faut rappeler heightThreshold pour être sur d'avoir la donnée à jour
-    -- print('OBS', self.aimingObs[h].cell.x .. ', ' .. self.aimingObs[h].cell.y, 'DEBUG-T = ' ..self.DEBUG_T)
-    p.x2 = self.aimingObs[h].cell.x + self.aimingObs[h].cell.ox
-    p.y2 = self.cell.y - self.aimingObs[h].h + self.aimingObs[h].cell.oy
+    local p = Plane.new(
+      self.data.plane,
+      self.data.exploding, -- le copy devrait être ici ?
+      self.aimingObs[h].cell.x + self.aimingObs[h].cell.ox,
+      self.cell.y - self.aimingObs[h].h + self.aimingObs[h].cell.oy
+    )
     if self.aimingObs[h].onTop then
       if self.aimingObs[h].cell == self.cell then
         -- perfect shot !
@@ -294,21 +244,14 @@ local gameState = {
       end
       table.insert(self.aimingObs[h].cell.flying, p)
     else
-      p.exploding = false
-      p.animations = {exploding = self.data.exploding:copy()}
-      p.animations.exploding.t = 0
-      table.insert(self.aimingObs[h].cell.missed, p)
+      p:miss(self.aimingObs[h].cell)
     end
-    p.len = utils.len(p.x1, p.y1, p.x2, p.y2)
-    p.x, p.y = p.x1, p.y1
-    p.t = 0
-    p.quad = self.data.plane
-    p.update = utils.updatePlane
     self.aiming = false
     self:setMoney(self.money - 1)
   end
 }
 
+gameState.door.cell.ox, gameState.door.cell.oy = .5, 0
 gameState:setMoney(100)
 gameState:setArticleCount(0)
 gameState:setArticleTodoCount(5)
@@ -320,7 +263,7 @@ end
 
 love.graphics.setLineStyle('rough')
 love.graphics.setLineWidth(utils.ratio)
-love.graphics.setFont(fonts.default)
+love.graphics.setFont(data.fonts.default)
 
 function love.draw()
   love.graphics.setColor(1, 1, 1)
@@ -336,12 +279,12 @@ function love.draw()
   utils.drawCalendar(gameState)
 
   if gameState.state ~= 'IDLE' then
-    utils.text.draw(gameState.texts.article, utils:worldCoordinates(7, 14))
+    gameState.quotes.article:draw(utils:worldCoordinates(7, 14))
   end
   -- utils.drawWalkingAreas()
 
   if gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
-    utils.drawLine(utils.lineAt(gameState.cell.y))
+    world:drawLineAt(gameState.cell)
   end
 
   utils.drawCells(gameState)
@@ -358,11 +301,11 @@ function love.draw()
       gameState.data.dollarEnd:draw(utils.ratio, dx + (math.min(200, gameState.money) - 1) * utils.ratio, dy)
     end
 
-    utils.text.draw(gameState.texts.money, utils:worldCoordinates(5, 1.5))
-    utils.text.draw(gameState.texts.mag, utils:worldCoordinates(5, 2.5))
+    gameState.quotes.money:draw(utils:worldCoordinates(5, 1.5))
+    gameState.quotes.mag:draw(utils:worldCoordinates(5, 2.5))
   end
 
-  utils.drawTexts(gameState)
+  utils.drawSpeaks(gameState)
 
   if ivan.state ~= 'walking' and gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
     gameState.data.cursor:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x, gameState.cell.y))
@@ -382,16 +325,16 @@ function love.draw()
   end
 
   if gameState.state == 'PAUSE' then
-    utils.text.drawTitle(gameState.texts.pause, utils.OX, utils.OY)
+    gameState.quotes.pause:drawTitle(utils.OX, utils.OY)
   elseif gameState.state == 'RUNNING' then
     if gameState.startTimer < 3 then
       love.graphics.setColor(1, 1, 1, gameState.startOpacity)
-      utils.text.drawTitle(gameState.texts.start, utils.OX, utils.OY + gameState.startOffsetY)
+      gameState.quotes.start:drawTitle(utils.OX, utils.OY + gameState.startOffsetY)
     end
   elseif gameState.state == 'GAME_OVER' then
-    utils.text.drawTitle(gameState.texts.gameOver, utils.OX, utils.OY)
+    gameState.quotes.gameOver:drawTitle(utils.OX, utils.OY)
   elseif gameState.state == 'IDLE' then
-    utils.text.drawSmall(gameState.texts.home, utils:worldCoordinates(10, 24))
+    gameState.quotes.home:drawSmall(utils:worldCoordinates(10, 24))
   end
 end
 
@@ -414,36 +357,13 @@ function love.mousereleased(x, y, button)
 end
 
 function love.keypressed(key)
-  if key == '1' then
-    gameState.DEBUG_T = 0
-  elseif key == '2' then
-    gameState.DEBUG_T = 0.1
-  elseif key == '3' then
-    gameState.DEBUG_T = 0.2
-  elseif key == '4' then
-    gameState.DEBUG_T = 0.3
-  elseif key == '5' then
-    gameState.DEBUG_T = 0.4
-  elseif key == '6' then
-    gameState.DEBUG_T = 0.5
-  elseif key == '7' then
-    gameState.DEBUG_T = 0.6
-  elseif key == '8' then
-    gameState.DEBUG_T = 0.7
-  elseif key == '9' then
-    gameState.DEBUG_T = 0.8
-  elseif key == '0' then
-    gameState.DEBUG_T = 0.9
-  elseif key == ')' then
-    gameState.DEBUG_T = nil
-  end
   if key == 'escape' then
     if love.window.getFullscreen() then
       if gameState.state == 'RUNNING' then
         gameState.state = 'PAUSE'
       end
       love.window.setFullscreen(false)
-      setSize(love.graphics.getDimensions())
+      utils:setSize(love.graphics.getDimensions())
     else
       love.event.quit()
     end
@@ -461,5 +381,5 @@ function love.keypressed(key)
 end
 
 function love.resize(w, h)
-  setSize(w, h)
+  utils:setSize(w, h)
 end
