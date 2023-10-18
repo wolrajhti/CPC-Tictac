@@ -585,7 +585,4 @@ require 'src.text' (utils) -- à généraliser
 
 utils.initCells() -- ULTRA SALE
 
-utils.cellAt(10, 45).h = 3
-utils.cellAt(14, 45).h = 5
-
 return utils

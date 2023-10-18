@@ -46,7 +46,7 @@ local texts = {
   article = utils.text.init(fonts.default, ""),
   mag = utils.text.init(fonts.default, ""),
   gameOver = utils.text.init(fonts.default, "GAME OVER"),
-  home = utils.text.init(fonts.default, "an Air Pigiste game for the \"Make Something Horrible, l'edition des 20 ans\" by Wolrajhti"),
+  home = utils.text.init(fonts.default, "a Tactical Air Pigiste game for the \"Make Something Horrible, l'edition des 20 ans\" by Wolrajhti"),
 }
 
 local loadTongues = require 'src.tongues'
@@ -204,7 +204,7 @@ local gameState = {
               self:setMagCount(self.magCount + 1)
               if #candidates > 0 then
                 -- si trop de production => le patronnat prend ça pour acquis
-                self:setArticleTodoCount(self.articleTodoCount + 1)
+                self:setArticleTodoCount(self.articleTodoCount + #candidates)
               end
             else
               -- si aucun magasine n'est produit dans le mois, ça stresse les rédacteurs
