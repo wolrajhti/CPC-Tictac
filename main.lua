@@ -402,13 +402,13 @@ function love.mousemoved(x, y)
 end
 
 function love.mousepressed(x, y, button)
-  if button == 1 then
+  if button == 1 and gameState.state ~= 'PAUSE' then
     gameState:aim()
   end
 end
 
 function love.mousereleased(x, y, button)
-  if button == 1 and gameState.aiming then
+  if button == 1 and gameState.state ~= 'PAUSE' and gameState.aiming then
     gameState:throw()
   end
 end
@@ -448,8 +448,15 @@ function love.keypressed(key)
       love.event.quit()
     end
   elseif key == 'space' then
-    gameState.state = utils.ternary(gameState.state == 'PAUSE', 'RUNNING', 'PAUSE') -- faire une pause de 3 min max comme dans l'emission
-    gameState:setPauseTimer(2 * 60 + 56)
+    if gameState.state == 'RUNNING' then
+      gameState.state = 'PAUSE' -- faire une pause de 3 min max comme dans l'emission
+      gameState:setPauseTimer(2 * 60 + 56)
+    elseif gameState.state == 'PAUSE' then
+      gameState.state = 'RUNNING'
+      if gameState.aiming then
+        gameState:throw()
+      end
+    end
   end
 end
 
