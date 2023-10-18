@@ -413,7 +413,7 @@ function utils.updateAgent(agent, dt, gameState)
             if i ~= 0 and not a.tongue.current then
               a.headState = 'idle'
             end
-          end 
+          end
         end)
       elseif agent.isIvan then
         agent.headState = 'speak'
@@ -431,7 +431,7 @@ function utils.updateAgent(agent, dt, gameState)
             if a.isAckboo or a == agent and not a.tongue.current then
               a.headState = 'idle'
             end
-          end 
+          end
         end)
       end
     end
@@ -534,7 +534,8 @@ function utils.drawCalendar(gameState)
   utils.setColor()
 end
 
-local N = {-1, -1, 0, -1, 1, -1, 1, 0, 1, 1, 0, 1, -1, 1, -1, 0}
+-- local N = {-1, -1, 0, -1, 1, -1, 1, 0, 1, 1, 0, 1, -1, 1, -1, 0}
+local N = {0, -1, 1, 0, 0, 1, -1, 0}
 local MAX_DIST = 4 * math.sqrt(2) -- TODO à réduire en fonction du temps qui passe -> plus de mag -> moins de perception
 function utils.findNearest(agents, cell)
   local candidates = {}
@@ -543,8 +544,8 @@ function utils.findNearest(agents, cell)
   local minDist = MAX_DIST
   for i, agent in ipairs(agents) do
     if agent.state == 'idle' then -- l'agent est libre
-      minDist = utils.len(agent.x, agent.y, cell.x, cell.y)
-      if minDist < MAX_DIST then -- et n'est pas trop loin
+      dist = utils.len(agent.x, agent.y, cell.x, cell.y)
+      if dist < MAX_DIST then -- et n'est pas trop loin
         for k = 1, #N, 2 do -- pour chaque case voisine
           neighbor = utils.cellAt(cell.x + N[k], cell.y + N[k + 1])
           if neighbor.redacWalkable and neighbor:isEmpty() then -- si disponible
