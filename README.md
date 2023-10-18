@@ -13,10 +13,10 @@ Attention à la trésorerie en fin de mois, les billets n'ayant pas servis à la
 
 Prenez garde aux piles d'invendus qui vous boucherons la vue et prenez soin de votre équipe pour éviter le burnout !
 
-But du jeu :
+### But du jeu :
 - Publier le plus de magasine possible
 
-Règles du jeu :
+### Règles du jeu :
 - Chaque billet lancé est débité du compte d'Ivan
 - Tout les weekends chaque rédacteur perd 1 point de stress
 - Un rédacteur démissionnera s'il atteint 8 points de stress
@@ -26,7 +26,7 @@ Règles du jeu :
 - Si le nombre d'article n'est pas suffisant pour publier un magasine, les rédacteurs perdront 1 point de stress à la fin du mois.
 - Si votre compte en banque se retrouve vide ou si tout les rédacteurs ont quitté la rédaction, vous perdez la partie
 
-Contrôles :
+### Contrôles :
 - [ Clic Gauche ] Maintenez pour ajuster votre tir
 - [ Espace ] Faire une pause
 - [ Echap ] Quitter le mode plein écran / Quitter le jeu
