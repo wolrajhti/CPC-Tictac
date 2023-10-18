@@ -5,38 +5,45 @@ local function updateTongue(self, dt) -- body state
   self.t = self.t + dt
   if self.t > 6 then
     self.current = nil
+    if self.callback then
+      self.callback() -- TODO horrible d'avoir a passer une fonction... il faudrait avoir accès à l'agent
+    end
     COUNT = COUNT - 1
   end
 end
 
-local function work(self)
+local function work(self, callback)
   if COUNT < MAX and not self.current and #self.texts.work > 0 then
     self.current = self.texts.work[love.math.random(1, #self.texts.work)]
     self.t = 0
+    self.callback = callback
     COUNT = COUNT + 1
   end
 end
 
-local function leaving(self)
+local function leaving(self, callback)
   if COUNT < MAX then
     self.current = self.texts.leaving[love.math.random(1, #self.texts.leaving)]
     self.t = 0
+    self.callback = callback
     COUNT = COUNT + 1
   end
 end
 
-local function random(self)
+local function random(self, callback)
   if COUNT < MAX and not self.current and #self.texts.random > 0 then
     self.current = self.texts.random[love.math.random(1, #self.texts.random)]
     self.t = 0
+    self.callback = callback
     COUNT = COUNT + 1
   end
 end
 
-local function aim(self)
+local function aim(self, callback)
   if COUNT < MAX and not self.current and #self.texts.aim > 0 then
     self.current = self.texts.aim[love.math.random(1, #self.texts.aim)]
     self.t = 0
+    self.callback = callback
     COUNT = COUNT + 1
   end
 end

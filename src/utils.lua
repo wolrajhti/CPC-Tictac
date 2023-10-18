@@ -389,7 +389,9 @@ function utils.updateAgent(agent, dt, gameState)
     agent.stress = math.min(agent.stress + 1, 8)
     agent.state = 'idle'
     if love.math.random() < 10 * dt then
-      agent.tongue:work()
+      agent.headState = 'speak'
+      agent.animations.head.speak.t = 0
+      agent.tongue:work(function() agent.headState = 'idle' end)
     end
   end
 
@@ -399,12 +401,43 @@ function utils.updateAgent(agent, dt, gameState)
       agent.headState = 'blink'
       agent.animations.head.blink.t = 0
     elseif love.math.random() < .025 * dt then
-      agent.tongue:random()
+      if agent.isAckboo then
+        for i, a in ipairs(gameState.agents) do
+          if i ~= 0 and a.headState == 'idle' then
+            a.headState = utils.ternary(a.isAckboo, 'speak', 'laugh')
+            a.animations.head[a.headState].t = 0
+          end
+        end
+        agent.tongue:random(function ()
+          for i, a in ipairs(gameState.agents) do
+            if i ~= 0 and not a.tongue.current then
+              a.headState = 'idle'
+            end
+          end 
+        end)
+      elseif agent.isIvan then
+        agent.headState = 'speak'
+        agent.animations.head.speak.t = 0
+        agent.tongue:random(function() agent.headState = 'idle' end)
+      else
+        for i, a in ipairs(gameState.agents) do
+          if a.isAckboo or a == agent and a.headState == 'idle' then
+            a.headState = utils.ternary(a.isAckboo, 'laugh', 'speak')
+            a.animations.head[a.headState].t = 0
+          end
+        end
+        agent.tongue:random(function ()
+          for i, a in ipairs(gameState.agents) do
+            if a.isAckboo or a == agent and not a.tongue.current then
+              a.headState = 'idle'
+            end
+          end 
+        end)
+      end
     end
   elseif agent.headState ~= 'cry' then
     if agent.animations.head[agent.headState].t == 1 then
       agent.headState = 'idle'
-      agent.animations.head.blink.t = 0
     end
   end
 end

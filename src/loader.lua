@@ -158,7 +158,9 @@ local function loader(utils)
       idle = utils.slice(heads, 2),
       blink = utils.slice(heads, 1, 2),
       cry = utils.slice(heads, 4),
-      surprise = utils.slice(heads, 5, 6)
+      surprise = utils.slice(heads, 5, 6),
+      laugh = utils.slice(heads, 7, 8),
+      speak = utils.slice(heads, 16, 17)
     },
     item = {
       idle = utils.slice(items, 9, 10)
@@ -177,6 +179,8 @@ local function loader(utils)
         blink = Animation.new(frames.head.blink, speed, x, y, w, h, ox, oy, true),
         cry = Animation.new(frames.head.cry, speed, x, y, w, h, ox, oy),
         surprise = Animation.new(frames.head.surprise, speed, x, y, w, h, ox, oy, true),
+        laugh = Animation.new(frames.head.laugh, speed * 3, x, y, w, h, ox, oy),
+        speak = Animation.new(frames.head.speak, speed * 1.5, x, y, w, h, ox, oy),
       },
       item = {
         idle = Animation.new(frames.item.idle, speed, x, y, w, h, ox, oy)
