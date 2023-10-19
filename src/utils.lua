@@ -156,8 +156,8 @@ function utils.drawTexts(gameState)
   end
 end
 
-function utils.cellIsEmpty(self)
-  return #self.objs + #self.agents + #self.flying == 0
+function utils.cellIsEmpty(self, skipH)
+  return #self.objs + #self.agents + #self.flying + utils.ternary(skipH, 0, self.h) == 0
 end
 
 function utils.cellAt(x, y)
@@ -196,7 +196,7 @@ function utils.heightThreshold(cell)
   local onTop
   for i, neighbor in pairs(utils.cells[cell.y]) do
     if neighbor.redacWalkable or cell.x < neighbor.x then
-      onTop = neighbor.redacWalkable and neighbor:isEmpty()
+      onTop = neighbor.redacWalkable and neighbor:isEmpty(true)
       for dh = 0, neighbor.h do
         local h = neighbor.x + dh - cell.x
         -- print('h = '..neighbor.x..' + '..dh..' - '..cell.x.. ' = '..h..'(neighbor.x = '..neighbor.x..')')
