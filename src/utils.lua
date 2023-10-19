@@ -24,39 +24,17 @@ function utils.setColor(self, r, g, b, a)
   love.graphics.setColor(r, g, b, a)
 end
 
+function utils.replaceColor(self, r, g, b, a)
+  love.graphics.setColor(r, g, b, a)
+end
+
+function utils.setOpacity(self, a)
+  self.r, self.g, self.b, self.a = love.graphics.getColor()
+  love.graphics.setColor(self.r, self.g, self.b, a)
+end
+
 function utils.resetColor(self)
   love.graphics.setColor(self.r, self.g, self.b, self.a)
-end
-
-function utils.drawSpeaks()
-  for i, cell in ipairs(utils.orderedCells) do
-    for i, agent in ipairs(cell.agents) do
-      agent:drawSpeak()
-    end
-  end
-end
-
-function utils.heightThreshold(cell)
-  -- print('---------------')
-  if not utils.cells[cell.y] then -- cas tout pourri, ne devrait pas exister
-    return {}
-  end
-
-  local obs = {}
-  local onTop
-  for i, neighbor in pairs(utils.cells[cell.y]) do
-    if neighbor.redacWalkable or cell.x < neighbor.x then
-      onTop = neighbor.redacWalkable and neighbor:isEmpty()
-      for dh = 0, neighbor.h do
-        local h = neighbor.x + dh - cell.x
-        -- print('h = '..neighbor.x..' + '..dh..' - '..cell.x.. ' = '..h..'(neighbor.x = '..neighbor.x..')')
-        if not obs[h] or neighbor.x < obs[h].cell.x then
-          obs[h] = {cell = neighbor, h = dh, onTop = onTop and dh == neighbor.h}
-        end
-      end
-    end
-  end
-  return obs
 end
 
 function utils.worldCoordinates(self, x, y)

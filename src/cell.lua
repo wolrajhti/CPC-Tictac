@@ -17,63 +17,49 @@ function Cell.new(x, y, walkable, redacWalkable)
   local new = {
     x = x,
     y = y,
-    flyings = nil,
-    plane = nil,
-    article = nil,
-    missed = {}, -- les avions ratés
-    explosions = {}, -- les avions en train d'exploser
+    flying = {}, -- les avions en train d'arriver
+    explosions = {}, -- les avions rater sont remplacés par des explosions
+    obj = nil, -- plane ou article
     walkable = walkable,
-    redacWalkable = redacWalkable -- yeurk
+    redacWalkable = redacWalkable, -- yeurk
     h = utils.ternary(walkable, 0, 10),
-    agents = {}, -- normalement qu'un seul devrait suffir... -- on devrait dessiner les agents en dehors pour ne pas avoir à gérer plusieurs agents par cellule
+    agent = nil,
     ox = -.15 + .3 * love.math.random(),
     oy = -.15 + .3 * love.math.random()
   }
+  new.cx, new.cy = new.x + new.ox, new.y + new.oy
   setmetatable(new, Cell.mt)
   return new
 end
 
 function Cell.isEmpty(self)
-  return not self:hasObject() and #self.agents == 0
-end
-
-function Cell.hasObject(self)
-  return self.plane or self.article or self.h > 0
+  return not self.obj and self.h == 0 and not self.agent
 end
 
 function Cell.draw(self, gameState)
-  for i, agent in ipairs(self.agents) do
-    if agent.behind == false then
-      agent:draw(gameState)
-    end
+  if self.agent and self.agent.behind == false then
+    self.agent:draw(gameState)
   end
-  if self:hasObject() then
-    if gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' and gameState.cell.y < self.y then
-      love.graphics.setColor(r, g, b, .2)
-    end
-    if self.h ~= 0 and self.redacWalkable then
-      gameState.data.mags[self.h]:draw(utils.ratio, utils:worldCoordinates(self.x + self.ox, self.y + self.oy)) -- il faudrait avoir cx, cy et x, y (= cx + ox, cy + oy)
-    end
-    for j, obj in ipairs(cell.objs) do
-      obj.quad:draw(utils.ratio, utils:worldCoordinates(self.x + self.ox, self.y + self.oy - self.h * utils.sy))
-    end
-    if gameState.cell and gameState.cell.y < self.y then
-      utils:resetColor()
-    end
+  if gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' and gameState.cell.y < self.y then -- TODO CLEAN
+    utils:setOpacity(.2)
   end
-  for j, flying in ipairs(cell.flying) do
+  if self.h ~= 0 and self.redacWalkable then
+    gameState.data.mags[self.h]:draw(utils.ratio, utils:worldCoordinates(self.cx, self.cy))
+  end
+  if self.obj then
+    gameState.data[self.obj]:draw(utils.ratio, utils:worldCoordinates(self.cx, self.cy - self.h * utils.sy))
+  end
+  if gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' and gameState.cell.y < self.y then -- TODO CLEAN
+    utils:resetColor()
+  end
+  for i, flying in ipairs(self.flying) do
     flying.quad:draw(utils.ratio, utils:worldCoordinates(flying.x, flying.y))
   end
-  for i, missed in ipairs(cell.missed) do
-    missed:draw(utils.ratio, utils:worldCoordinates(missed.x, missed.y))
-  end
   for i, explosion in ipairs(self.explosions) do
-    exploding:draw(utils.ratio, utils:worldCoordinates(missed.x, missed.y))
+    exploding:draw(utils.ratio, utils:worldCoordinates(self.cx, self.cy))
   end
-  for i, agent in ipairs(self.agents) do
-    if agent.behind then
-      agent:draw(gameState)
-    end
+  if self.agent and self.agent.behind then
+    self.agent:draw(gameState)
   end
 end
 

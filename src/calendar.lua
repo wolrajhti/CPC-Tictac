@@ -7,7 +7,7 @@ function Calendar.new(speed, cells)
   local new = {
     t = 0,
     speed = speed,
-    day = 0,
+    day = 1,
     endOfTheMonth = false,
     weekend = false,
     cells = cells -- {x = 42, y = 42} au lieu de {42, 42} ?
@@ -39,10 +39,12 @@ function Calendar.draw(self)
   local cell
   for i = 1, self.day - 1 do
     cell = self.cells[i]
-    love.graphics.rectangle('fill', utils.ox + cell[1] * utils.ratio, utils.oy + day[2] * utils.ratio, 2 * utils.ratio, 2 * utils.ratio)
+    love.graphics.rectangle('fill', utils.ox + cell[1] * utils.ratio, utils.oy + cell[2] * utils.ratio, 2 * utils.ratio, 2 * utils.ratio)
   end
   cell = self.cells[self.day]
-  love.graphics.rectangle('fill', utils.ox + cell[1] * utils.ratio, utils.oy + day[2] * utils.ratio, 1 * utils.ratio, 2 * utils.ratio)
-  love.graphics.rectangle('fill', utils.ox + (cell[1] + 1) * utils.ratio, utils.oy + (day[2] + 1) * utils.ratio, 1 * utils.ratio, 1 * utils.ratio)
+  love.graphics.rectangle('fill', utils.ox + cell[1] * utils.ratio, utils.oy + cell[2] * utils.ratio, 1 * utils.ratio, 2 * utils.ratio)
+  love.graphics.rectangle('fill', utils.ox + (cell[1] + 1) * utils.ratio, utils.oy + (cell[2] + 1) * utils.ratio, 1 * utils.ratio, 1 * utils.ratio)
   utils:resetColor()
 end
+
+return Calendar

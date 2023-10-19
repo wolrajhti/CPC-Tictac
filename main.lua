@@ -6,33 +6,36 @@ local utils = require 'src.utils'
 local loader = require 'src.loader'
 local Agent = require 'src.agent'
 local Plane = require 'src.plane'
+local WalkableArea = require 'src.walkable-area'
+local World = require 'src.world'
+local Calendar = require 'src.calendar'
 
 local data = loader.load()
 
 utils:setBackgroundImage(data.background)
 utils:setSize(love.graphics.getDimensions())
 
-local ivan = Agent.new(2, 7, data.ivanSpeaks, data.ivanAnimations)
-ivan.isIvan = true
-local ackboo = Agent.new(6, 20, data.ackbooSpeaks, data.ackbooAnimations)
-ackboo.isAckboo = true
-local izual = Agent.new(9, 20, data.izualSpeaks, data.izualAnimations)
-local sebum = Agent.new(12, 20, data.sebumSpeaks, data.sebumAnimations)
-local ellen = Agent.new(13, 18, data.ellenSpeaks, data.ellenAnimations)
-
 local world = World.new({
   -- ivan
-  {x = 1, y = 2, w = 1, h = 6},
-  {x = 2, y = 3, w = 1, h = 5},
-  {x = 3, y = 5, w = 1, h = 2},
+  WalkableArea.new(1, 2, 1, 6),
+  WalkableArea.new(2, 3, 1, 5),
+  WalkableArea.new(3, 5, 1, 2),
   -- door
-  {x = 13, y = 17, w = 1, h = 1}
+  WalkableArea.new(13, 17, 1, 1)
 }, {
   -- redac
-  {x = 3, y = 18, w = 15, h = 3},
-  {x = 2, y = 21, w = 17, h = 2},
-  {x = 1, y = 23, w = 19, h = 2},
+  WalkableArea.new(3, 18, 15, 3),
+  WalkableArea.new(2, 21, 17, 2),
+  WalkableArea.new(1, 23, 19, 2),
 })
+
+local ivan = Agent.new(world:cellAt(2, 7), data.ivanSpeaks, data.ivanAnimations)
+ivan.isIvan = true
+local ackboo = Agent.new(world:cellAt(6, 20), data.ackbooSpeaks, data.ackbooAnimations)
+ackboo.isAckboo = true
+local izual = Agent.new(world:cellAt(9, 20), data.izualSpeaks, data.izualAnimations)
+local sebum = Agent.new(world:cellAt(12, 20), data.sebumSpeaks, data.sebumAnimations)
+local ellen = Agent.new(world:cellAt(13, 18), data.ellenSpeaks, data.ellenAnimations)
 
 local cell
 local aiming = false
@@ -106,12 +109,12 @@ local gameState = {
     {127, 118}, {129, 118}, {131, 118}, {133, 118}
   }),
   agents = {ivan, ackboo, izual, sebum, ellen},
-  door = {image = door, cell = utils.cellAt(13, 17)},
+  door = {image = door, cell = world:cellAt(13, 17), agents = {}},
   aimingObs = {},
   updateCell = function(self, x, y)
     if self.state ~= 'PAUSE' then
-      self.cell = utils.cellAt(utils:cellCoordinates(x, y))
-      self.aimingObs = utils.heightThreshold(self.cell) -- TODO à maj en temps réel
+      self.cell = world:cellAt(utils:cellCoordinates(x, y))
+      self.aimingObs = world:heightThreshold(self.cell) -- TODO à maj en temps réel
     end
   end,
   update = function(self, dt)
@@ -133,15 +136,11 @@ local gameState = {
             for i, cell in ipairs(utils.orderedCells) do
               if cell.redacWalkable and #cell.objs ~= 0 then
                 needsUpdate = needsUpdate or self.cell and cell.y == self.cell.y
-                if cell.waitingFor == nil then -- s'il y a un objet et que waitingFor est nil => c'est un article !
+                if cell.obj == 'article' then
                   table.insert(candidates, cell)
                 else
-                  local p = table.remove(cell.objs, #cell.objs)
-                  p.exploding = false
-                  p.update = utils.updatePlane
-                  p.animations = {exploding = self.data.exploding:copy()}
-                  p.animations.exploding.t = 0
-                  table.insert(cell.missed, p)
+                  cell.obj = nil
+                  table.insert(cell.explosions, self.data.exploding:copy())
                 end
               end
             end
@@ -192,7 +191,7 @@ local gameState = {
       end
 
       for i = #self.agents, 1, -1 do
-        self.agents[i]:update(dt, self)
+        self.agents[i]:update(dt, self, world)
         if self.agents[i].state == 'leaving' and self.agents[i].t == 1 then
           utils.remove(self.agents[i].to.agents, self.agents[i])
           table.remove(self.agents, i)
@@ -205,7 +204,7 @@ local gameState = {
       self.data.logos:update(dt)
       self.data.waves:update(dt)
 
-      utils.updateCells(dt, self)
+      world:update(dt, self)
     else
       self:updatePauseTimer(dt)
     end
@@ -272,11 +271,11 @@ function love.draw()
   gameState.data.logos:draw(utils.ratio, utils.OX, utils.OY)
   gameState.data.waves:draw(utils.ratio, utils.OX, utils.OY)
 
-  if #gameState.door.cell.agents ~= 0 then
+  if #gameState.door.agents ~= 0 then
     gameState.data.door:draw(utils.ratio, utils.OX, utils.OY)
   end
 
-  utils.drawCalendar(gameState)
+  gameState.calendar:draw()
 
   if gameState.state ~= 'IDLE' then
     gameState.quotes.article:draw(utils:worldCoordinates(7, 14))
@@ -287,7 +286,7 @@ function love.draw()
     world:drawLineAt(gameState.cell)
   end
 
-  utils.drawCells(gameState)
+  world:drawCells(gameState)
 
   gameState.data.foreground:draw(utils.ratio, utils.OX, utils.OY)
 
@@ -305,7 +304,7 @@ function love.draw()
     gameState.quotes.mag:draw(utils:worldCoordinates(5, 2.5))
   end
 
-  utils.drawSpeaks(gameState)
+  world:drawSpeaks(gameState)
 
   if ivan.state ~= 'walking' and gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
     gameState.data.cursor:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x, gameState.cell.y))

@@ -4,13 +4,12 @@ Agent.mt = {__index = Agent}
 local utils = require 'src.utils'
 local Path = require 'src.path'
 
-function Agent.new(x, y, tongue, animations, stress)
+function Agent.new(cell, tongue, animations, stress)
   local new = {
     isIvan = false,
     isAckboo = false,
     tongue = tongue,
-    x = x,
-    y = y,
+    cell = cell,
     state = 'idle',
     headState = 'idle',
     itemState = 'idle',
@@ -20,8 +19,7 @@ function Agent.new(x, y, tongue, animations, stress)
     animations = animations,
     stress = 0
   }
-  new.to = utils.cellAt(new.x, new.y) -- bof
-  table.insert(new.to.agents, new) -- bof
+  cell.agent = new
   setmetatable(new, Agent.mt)
   return new
 end
@@ -35,16 +33,16 @@ function Agent.getWorried(self)
 end
 
 function Agent.goTo(self, cell)
-  self.from = self.to
-  utils.remove(self.to.agents, self)
-  self.to = cell
-  table.insert(self.to.agents, self)
-  self.path = Path.new(self.from.x, self.from.y, self.to.x + self.to.ox, self.to.y + self.to.oy)
-  self.reverse = (self.to.x + self.to.ox) < self.from.x
-  self.behind = (self.to.y + self.to.oy) < self.from.y
+  self.from = self.cell
+  self.cell.agent = nil
+  self.cell = cell
+  self.cell.agent = self
+  self.path = Path.new(self.from.cx, self.from.cy, self.cell.cx, self.cell.cy)
+  self.reverse = (self.cell.cx) < self.from.cx
+  self.behind = (self.cell.cy) < self.from.cy
 end
 
-function Agent.update(self, dt, gameState)
+function Agent.update(self, dt, gameState, world)
   self.animations.body[self.state]:update(dt)
   self.animations.head[self.headState]:update(dt)
   if self.isAckboo then
@@ -65,22 +63,21 @@ function Agent.update(self, dt, gameState)
       self:goTo(gameState.door.cell)
     elseif love.math.random() < .5 * dt and (gameState.state ~= 'IDLE' or not self.isIvan) then
       local candidates = {}
-      local origin = utils.cellAt(self.x, self.y)
       local next
-      next = utils.cellAt(self.x - 1, self.y)
-      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and self.from ~= next then
+      next = world:cellAt(self.cell.x - 1, self.cell.y)
+      if next.walkable and self.cell.redacWalkable == next.redacWalkable and next:isEmpty() and self.from ~= next then
         table.insert(candidates, next)
       end
-      next = utils.cellAt(self.x, self.y - 1)
-      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and self.from ~= next then
+      next = world:cellAt(self.cell.x, self.cell.y - 1)
+      if next.walkable and self.cell.redacWalkable == next.redacWalkable and next:isEmpty() and self.from ~= next then
         table.insert(candidates, next)
       end
-      next = utils.cellAt(self.x + 1, self.y)
-      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and self.from ~= next then
+      next = world:cellAt(self.cell.x + 1, self.cell.y)
+      if next.walkable and self.cell.redacWalkable == next.redacWalkable and next:isEmpty() and self.from ~= next then
         table.insert(candidates, next)
       end
-      next = utils.cellAt(self.x, self.y + 1)
-      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and self.from ~= next then
+      next = world:cellAt(self.cell.x, self.cell.y + 1)
+      if next.walkable and self.cell.redacWalkable == next.redacWalkable and next:isEmpty() and self.from ~= next then
         table.insert(candidates, next)
       end
       if #candidates > 0 then
@@ -104,9 +101,7 @@ function Agent.update(self, dt, gameState)
       self.state = 'work'
     end
   elseif self.state == 'work' then
-    local objs = self.target.objs
-    table.remove(objs, #objs) -- on retire le dernier objet (un avion)
-    table.insert(objs, {quad = gameState.data.article})
+    self.target.obj = 'article'
     gameState:setArticleCount(gameState.articleCount + 1)
     self.target.waitingFor = nil -- le rédacteur a ramasser l'avion
     self.target = nil
@@ -167,7 +162,7 @@ function Agent.update(self, dt, gameState)
 end
 
 function Agent.draw(self, gameState) -- dommage le gameState
-  local sx, sy = utils:worldCoordinates(self.x, self.y)
+  local sx, sy = utils:worldCoordinates(self.cell.cx, self.cell.cy)
   self.animations.body[self.state]:draw(utils.ratio, sx, sy, self.reverse)
   self.animations.head[self.headState]:draw(utils.ratio, sx, sy, self.reverse)
   if self.isAckboo then
@@ -179,7 +174,7 @@ function Agent.draw(self, gameState) -- dommage le gameState
 end
 
 function Agent.drawSpeak(self)
-  self.tongue:draw(utils:worldCoordinates(self.x, self.y))
+  self.tongue:draw(utils:worldCoordinates(self.cell.cx, self.cell.cy))
 end
 
 return Agent

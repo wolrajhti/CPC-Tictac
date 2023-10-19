@@ -2,10 +2,10 @@ local World = {}
 World.mt = {__index = World}
 
 local Cell = require 'src.cell'
+local utils = require 'src.utils'
 
 function World.new(walkableAreas, redacWalkableAreas)
   local new = {
-    cells = {},
     cells = {},
     orderedCells = {},
     walkableAreas = walkableAreas,
@@ -48,11 +48,11 @@ function World.isRedacWalkable(self, x, y)
   return false
 end
 
-function World.drawLineAt(self, x, y)
+function World.drawLineAt(self, cell)
   for i, rwa in ipairs(self.redacWalkableAreas) do
-    if rwa:contains(x, y) then
+    if rwa:contains(cell.x, cell.y) then
       utils:setColor(.1, .1, .1, .2)
-      x, y = utils:worldCoordinates(rwa.x, y)
+      local x, y = utils:worldCoordinates(rwa.x, cell.y)
       love.graphics.rectangle(
         'fill',
         x - .5 * utils.cw,
@@ -87,19 +87,23 @@ function World.update(self, dt, gameState)
   for i, cell in ipairs(self.orderedCells) do
     for i = #cell.flying, 1, -1 do
       cell.flying[i]:update(dt)
-      if not cell.flying[i].update then
-        table.insert(cell.objs, table.remove(cell.flying, i))
-        cell.waitingFor = false -- en attente d'un rédacteur
-        self:alert(cell, gameState.agents)
+      if cell.flying[i].t == 1 then
+        if not cell.obj then
+          cell.obj = gameState.data.plane
+          table.remove(cell.flying, i)
+          self:alert(cell, gameState.agents)
+        else
+          table.insert(cell.explosions, gameState.data.explosion:copy())
+        end
       end
     end
-    for i = #cell.missed, 1, -1 do
-      cell.missed[i]:update(dt)
-      if not cell.missed[i].update then
-        table.remove(cell.missed, i)
+    for i = #cell.explosions, 1, -1 do
+      cell.explosions[i]:update(dt)
+      if cell.explosions[i].t == 1 then
+        table.remove(cell.explosions, i)
       end
     end
-    if cell.waitingFor == false then
+    if cell.obj == 'plane' and not cell.waitingFor then
       table.insert(candidates, cell)
     end
   end
@@ -109,9 +113,40 @@ function World.update(self, dt, gameState)
   end
 end
 
+function World.heightThreshold(self, cell)
+  -- print('---------------')
+  if not self.cells[cell.y] then -- cas tout pourri, ne devrait pas exister
+    return {}
+  end
+
+  local obs = {}
+  local onTop
+  for i, neighbor in pairs(self.cells[cell.y]) do
+    if neighbor.redacWalkable or cell.x < neighbor.x then
+      onTop = neighbor.redacWalkable and neighbor:isEmpty()
+      for dh = 0, neighbor.h do
+        local h = neighbor.x + dh - cell.x
+        -- print('h = '..neighbor.x..' + '..dh..' - '..cell.x.. ' = '..h..'(neighbor.x = '..neighbor.x..')')
+        if not obs[h] or neighbor.x < obs[h].cell.x then
+          obs[h] = {cell = neighbor, h = dh, onTop = onTop and dh == neighbor.h}
+        end
+      end
+    end
+  end
+  return obs
+end
+
 function World.drawCells(self, gameState) -- beurk beurk beurk
   for i, cell in ipairs(self.orderedCells) do
     cell:draw(gameState)
+  end
+end
+
+function World.drawSpeaks(self)
+  for i, cell in ipairs(self.orderedCells) do
+    if cell.agent then
+      cell.agent:drawSpeak()
+    end
   end
 end
 
@@ -136,8 +171,8 @@ function World.alert(self, cell, agents)
     nearest.agent.state = 'goingToWork'
     nearest.agent.headState = 'surprise'
     nearest.agent.animations.head.surprise.t = 0
-    nearest.agent.target = self
-    self.waitingFor = nearest.agent -- le rédacteur va vers la cellule
+    nearest.agent.target = cell
+    cell.waitingFor = nearest.agent -- le rédacteur va vers la cellule
     nearest.agent:goTo(nearest.neighbor)
   end
 end

@@ -42,12 +42,12 @@ function Text.drawSpeak(self, x, y, color, background)
   elseif (utils.bh - 4) * utils.ratio < yMin + h then
     yOffset = (utils.bh - 4) * utils.ratio - (yMin + h)
   end
-  utils:getColor(background.r, background.g, background.b, background.a)
+  utils:setColor(background.r, background.g, background.b, background.a)
   love.graphics.rectangle('fill',
     xMin + xOffset, yMin + yOffset,
     w, h
   )
-  love.graphics.setColor(color.r, color.g, color.b, color.a)
+  utils:replaceColor(color.r, color.g, color.b, color.a)
   love.graphics.draw(
     self.text,
     x + xOffset, y - 29 * utils.ratio - 3 * utils.ratio + yOffset,
