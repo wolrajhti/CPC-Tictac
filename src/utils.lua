@@ -294,7 +294,7 @@ end
 function utils.slice(tab, first, last)
   local slice = {}
 
-  for i = math.max(0, first), math.min(last or first, #tab) do
+  for i = math.max(1, first or 1), math.min(last or #tab, #tab) do
     table.insert(slice, tab[i])
   end
 

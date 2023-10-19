@@ -150,14 +150,14 @@ local function loader(utils)
 
   local frames = {
     body = {
-      idle = utils.slice(bodies, 2),
+      idle = {bodies[2]},
       walking = utils.slice(bodies, 12, 13),
       aiming = utils.slice(bodies, 15)
     },
     head = {
-      idle = utils.slice(heads, 2),
+      idle = {heads[2]},
       blink = utils.slice(heads, 1, 2),
-      cry = utils.slice(heads, 4),
+      cry = {heads[4]},
       surprise = utils.slice(heads, 5, 6),
       laugh = utils.slice(heads, 7, 8),
       speak = utils.slice(heads, 16, 17)

@@ -1,6 +1,8 @@
 local COUNT = 0;
 local MAX = 3;
 
+local utils = require 'src.utils'
+
 local function updateTongue(self, dt) -- body state
   self.t = self.t + dt
   if self.t > 6 then
@@ -14,7 +16,10 @@ end
 
 local function work(self, callback)
   if COUNT < MAX and not self.current and #self.texts.work > 0 then
-    self.current = self.texts.work[love.math.random(1, #self.texts.work)]
+    if #self.next.work == 0 then
+      self.next.work = utils.slice(self.texts.work)
+    end
+    self.current = table.remove(self.next.work, love.math.random(1, #self.next.work))
     self.t = 0
     self.callback = callback
     COUNT = COUNT + 1
@@ -22,8 +27,11 @@ local function work(self, callback)
 end
 
 local function leaving(self, callback)
-  if COUNT < MAX then
-    self.current = self.texts.leaving[love.math.random(1, #self.texts.leaving)]
+  if COUNT < MAX or self.current then -- si on parle, il faut remplacer le texte
+    if #self.next.leaving == 0 then
+      self.next.leaving = utils.slice(self.texts.leaving)
+    end
+    self.current = table.remove(self.next.leaving, love.math.random(1, #self.next.leaving))
     self.t = 0
     self.callback = callback
     COUNT = COUNT + 1
@@ -32,7 +40,10 @@ end
 
 local function random(self, callback)
   if COUNT < MAX and not self.current and #self.texts.random > 0 then
-    self.current = self.texts.random[love.math.random(1, #self.texts.random)]
+    if #self.next.random == 0 then
+      self.next.random = utils.slice(self.texts.random)
+    end
+    self.current = table.remove(self.next.random, love.math.random(1, #self.next.random))
     self.t = 0
     self.callback = callback
     COUNT = COUNT + 1
@@ -41,7 +52,10 @@ end
 
 local function aim(self, callback)
   if COUNT < MAX and not self.current and #self.texts.aim > 0 then
-    self.current = self.texts.aim[love.math.random(1, #self.texts.aim)]
+    if #self.next.aim == 0 then
+      self.next.aim = utils.slice(self.texts.aim)
+    end
+    self.current = table.remove(self.next.aim, love.math.random(1, #self.next.aim))
     self.t = 0
     self.callback = callback
     COUNT = COUNT + 1
@@ -56,6 +70,7 @@ local loadTongues = function(fonts)
       background = {r = 251 / 255, g = 242 / 255, b = 54 / 255, a = 1}, -- JAUNE OU VERT
       current = nil,
       t = 0,
+      next = {work = {}, leaving = {}, random = {}, aim = {}},
       texts = {
         work = {},
         leaving = {},
@@ -92,6 +107,7 @@ local loadTongues = function(fonts)
       background = {r = 1, g = 1, b = 1, a = 1},
       current = nil,
       t = 0,
+      next = {work = {}, leaving = {}, random = {}, aim = {}},
       texts = {
         work = {
           "Pas compatible vSync .. 6/10",
@@ -134,6 +150,7 @@ local loadTongues = function(fonts)
       background = {r = 1, g = 1, b = 1, a = 1}, -- JAUNE OU VERT
       current = nil,
       t = 0,
+      next = {work = {}, leaving = {}, random = {}, aim = {}},
       texts = {
         work = {
           "Ce que le capitalisme sait faire de\nmieux 9/10",
@@ -180,6 +197,7 @@ local loadTongues = function(fonts)
       background = {r = 170 / 255, g = 108 / 255, b = 45 / 255, a = 1}, -- JAUNE OU VERT
       current = nil,
       t = 0,
+      next = {work = {}, leaving = {}, random = {}, aim = {}},
       texts = {
         work = {
           "Une experience tres synesthesique :\nPost-modernisme / 10",
@@ -219,6 +237,7 @@ local loadTongues = function(fonts)
       background = {r = .1, g = .1, b = .1, a = 1}, -- JAUNE OU VERT
       current = nil,
       t = 0,
+      next = {work = {}, leaving = {}, random = {}, aim = {}},
       texts = {
         work = {
           "Si vous avez une PS5 et 20H devant vous\nfoncez 8/10",
