@@ -152,7 +152,7 @@ local function loader(utils)
     body = {
       idle = {bodies[2]},
       walking = utils.slice(bodies, 12, 13),
-      aiming = utils.slice(bodies, 15)
+      aiming = {bodies[15]}
     },
     head = {
       idle = {heads[2]},
