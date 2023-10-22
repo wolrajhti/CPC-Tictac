@@ -52,13 +52,11 @@ local texts = {
 local loadTongues = require 'src.tongues'
 local tongues = loadTongues(fonts)
 
-local ivan = utils.initAgent(2, 7, tongues.ivan, data.ivanAnimations, 0)
-ivan.isIvan = true
-local ackboo = utils.initAgent(6, 20, tongues.ackboo, data.ackbooAnimations)
-ackboo.isAckboo = true
-local izual = utils.initAgent(9, 20, tongues.izual, data.izualAnimations)
-local sebum = utils.initAgent(12, 20, tongues.sebum, data.sebumAnimations)
-local ellen = utils.initAgent(13, 18, tongues.ellen, data.ellenAnimations)
+local ivan = utils.initAgent('Ivan', 2, 7, tongues.ivan, data.ivanAnimations, 0)
+local ackboo = utils.initAgent('Ackboo', 6, 20, tongues.ackboo, data.ackbooAnimations)
+local izual = utils.initAgent('Izual', 9, 20, tongues.izual, data.izualAnimations)
+local sebum = utils.initAgent('Sebum', 12, 20, tongues.sebum, data.sebumAnimations)
+local ellen = utils.initAgent('Ellen', 13, 18, tongues.ellen, data.ellenAnimations)
 
 local cell
 local aiming = false

@@ -219,7 +219,7 @@ function utils.cellCoordinates(self, x, y)
          math.floor(((y - self.oy) + .5 * self.ch) / (self.ch))
 end
 
-function utils.initAgent(x, y, tongue, animations, stress)
+function utils.initAgent(id, x, y, tongue, animations, stress)
   for i = 1, #tongue.texts.work do
     tongue.texts.work[i] = utils.text.init(tongue.font, tongue.texts.work[i])
   end
@@ -233,8 +233,7 @@ function utils.initAgent(x, y, tongue, animations, stress)
     tongue.texts.aim[i] = utils.text.init(tongue.font, tongue.texts.aim[i])
   end
   local agent = {
-    isIvan = false,
-    isAckboo = false,
+    id = id,
     tongue = tongue,
     x = x,
     y = y,
@@ -323,7 +322,7 @@ end
 function utils.updateAgent(agent, dt, gameState)
   agent.animations.body[agent.state]:update(dt)
   agent.animations.head[agent.headState]:update(dt)
-  if agent.isAckboo then
+  if agent.id == 'Ackboo' then
     agent.animations.item[agent.itemState]:update(dt)
   end
 
@@ -339,7 +338,7 @@ function utils.updateAgent(agent, dt, gameState)
       agent.tongue:leaving()
       agent.animations.head.cry.t = 0
       agent:goTo(gameState.door.cell, gameState.door.ox)
-    elseif love.math.random() < .5 * dt and (gameState.state ~= 'IDLE' or not agent.isIvan) then
+    elseif love.math.random() < .5 * dt and (gameState.state ~= 'IDLE' or agent.id ~= 'Ivan') then -- ivan ne doit pas bouger en idle pour que le 1er aim fonctionne correctement
       local candidates = {}
       local origin = utils.cellAt(agent.x, agent.y)
       local next
@@ -401,10 +400,10 @@ function utils.updateAgent(agent, dt, gameState)
       agent.headState = 'blink'
       agent.animations.head.blink.t = 0
     elseif love.math.random() < .025 * dt then
-      if agent.isAckboo then
+      if agent.id == 'Ackboo' then
         for i, a in ipairs(gameState.agents) do
           if i ~= 0 and a.headState == 'idle' then
-            a.headState = utils.ternary(a.isAckboo, 'speak', 'laugh')
+            a.headState = utils.ternary(a.id == 'Ackboo', 'speak', 'laugh')
             a.animations.head[a.headState].t = 0
           end
         end
@@ -415,20 +414,20 @@ function utils.updateAgent(agent, dt, gameState)
             end
           end
         end)
-      elseif agent.isIvan then
+      elseif agent.id == 'Ivan' then
         agent.headState = 'speak'
         agent.animations.head.speak.t = 0
         agent.tongue:random(function() agent.headState = 'idle' end)
       else
         for i, a in ipairs(gameState.agents) do
-          if a.isAckboo or a == agent and a.headState == 'idle' then
-            a.headState = utils.ternary(a.isAckboo, 'laugh', 'speak')
+          if a.id == 'Ackboo' or a == agent and a.headState == 'idle' then
+            a.headState = utils.ternary(a.id == 'Ackboo', 'laugh', 'speak')
             a.animations.head[a.headState].t = 0
           end
         end
         agent.tongue:random(function ()
           for i, a in ipairs(gameState.agents) do
-            if a.isAckboo or a == agent and not a.tongue.current then
+            if a.id == 'Ackboo' or a == agent and not a.tongue.current then
               a.headState = 'idle'
             end
           end
@@ -446,7 +445,7 @@ function utils.drawAgent(agent, gameState)
   local sx, sy = utils:worldCoordinates(agent.x, agent.y)
   agent.animations.body[agent.state]:draw(utils.ratio, sx, sy, agent.reverse)
   agent.animations.head[agent.headState]:draw(utils.ratio, sx, sy, agent.reverse)
-  if agent.isAckboo then
+  if agent.id == 'Ackboo' then
     agent.animations.item[agent.itemState]:draw(utils.ratio, sx, sy, agent.reverse)
   end
   if agent.stress > 0 then
