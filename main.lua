@@ -52,11 +52,11 @@ local texts = {
 local loadTongues = require 'src.tongues'
 local tongues = loadTongues(fonts)
 
-local ivan = utils.initAgent('Ivan', 2, 7, tongues.ivan, data.ivanAnimations, 0)
-local ackboo = utils.initAgent('Ackboo', 6, 20, tongues.ackboo, data.ackbooAnimations)
-local izual = utils.initAgent('Izual', 9, 20, tongues.izual, data.izualAnimations)
-local sebum = utils.initAgent('Sebum', 12, 20, tongues.sebum, data.sebumAnimations)
-local ellen = utils.initAgent('Ellen', 13, 18, tongues.ellen, data.ellenAnimations)
+local ivan = utils.initAgent('Ivan', utils.cellAt(2, 7), tongues.ivan, data.ivanAnimations, 0)
+local ackboo = utils.initAgent('Ackboo', utils.cellAt(6, 20), tongues.ackboo, data.ackbooAnimations)
+local izual = utils.initAgent('Izual', utils.cellAt(9, 20), tongues.izual, data.izualAnimations)
+local sebum = utils.initAgent('Sebum', utils.cellAt(12, 20), tongues.sebum, data.sebumAnimations)
+local ellen = utils.initAgent('Ellen', utils.cellAt(13, 18), tongues.ellen, data.ellenAnimations)
 
 local cell
 local aiming = false
@@ -138,7 +138,7 @@ local gameState = {
     {127, 118}, {129, 118}, {131, 118}, {133, 118}
   },
   agents = {ivan, ackboo, izual, sebum, ellen},
-  door = {image = door, cell = utils.cellAt(13, 17), ox = .5},
+  door = {image = door, cell = utils.cellAt(13, 17)},
   aimingObs = {},
   updateCell = function(self, x, y)
     if self.state ~= 'PAUSE' then
@@ -283,7 +283,7 @@ local gameState = {
     }
     -- il faut rappeler heightThreshold pour être sur d'avoir la donnée à jour
     -- print('OBS', self.aimingObs[h].cell.x .. ', ' .. self.aimingObs[h].cell.y, 'DEBUG-T = ' ..self.DEBUG_T)
-    p.x2 = self.aimingObs[h].cell.x + self.aimingObs[h].cell.ox
+    p.x2 = self.aimingObs[h].cell.cx
     p.y2 = self.cell.y - self.aimingObs[h].h + self.aimingObs[h].cell.oy
     if self.aimingObs[h].onTop then
       if self.aimingObs[h].cell == self.cell then
@@ -306,6 +306,9 @@ local gameState = {
     self:setMoney(self.money - 1)
   end
 }
+
+gameState.door.cell.ax = gameState.door.cell.x + .5
+gameState.door.cell.ay = gameState.door.cell.y + 0
 
 gameState:setMoney(100)
 gameState:setArticleCount(0)
@@ -365,16 +368,16 @@ function love.draw()
   if ivan.state ~= 'walking' and gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
     gameState.data.cursor:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x, gameState.cell.y))
     if gameState.state ~= 'IDLE' or gameState.aiming then
-      gameState.data.ruler:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy))
+      gameState.data.ruler:draw(utils.ratio, utils:worldCoordinates(gameState.cell.cx, gameState.cell.cy))
       love.graphics.setColor(251 / 255, 242 / 255, 54 / 255)
       for i = 9, 0, -1 do
         if gameState.aimingObs[i].onTop == true then -- à ajuster
-          gameState.data.tick:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy - i * utils.sy))
+          gameState.data.tick:draw(utils.ratio, utils:worldCoordinates(gameState.cell.cx, gameState.cell.cy - i * utils.sy))
         end
       end
       love.graphics.setColor(1, 1, 1)
       if gameState.aiming then
-        gameState.data.target:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x + gameState.cell.ox, gameState.cell.y + gameState.cell.oy + gameState.offset * utils.sy))
+        gameState.data.target:draw(utils.ratio, utils:worldCoordinates(gameState.cell.cx, gameState.cell.cy + gameState.offset * utils.sy))
       end
     end
   end

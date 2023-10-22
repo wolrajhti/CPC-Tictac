@@ -192,7 +192,7 @@ local function loader(utils)
     return a
   end
 
-  data.ivanAnimations = helper(2, 0, 0, 21, 31, nil, 28)
+  data.ivanAnimations = helper(2, 0, 0, 21, 31, nil, 28) -- ya un petit décalage je crois
   data.ackbooAnimations = helper(2, 20, 2, 17, 29, nil, 28)
   data.ackbooAnimations.item.idle.speed = 10 -- GROS HACK
   data.izualAnimations = helper(2, 37, 2, 17, 29, nil, 28)

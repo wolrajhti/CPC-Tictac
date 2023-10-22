@@ -122,10 +122,10 @@ function utils.drawCells(gameState) -- beurk beurk beurk
         love.graphics.setColor(r, g, b, .2)
       end
       if cell.h ~= 0 and cell.redacWalkable then
-        gameState.data.mags[cell.h]:draw(utils.ratio, utils:worldCoordinates(cell.x + cell.ox, cell.y + cell.oy)) -- il faudrait avoir cx, cy et x, y (= cx + ox, cy + oy)
+        gameState.data.mags[cell.h]:draw(utils.ratio, utils:worldCoordinates(cell.cx, cell.cy))
       end
       for j, obj in ipairs(cell.objs) do
-        obj.quad:draw(utils.ratio, utils:worldCoordinates(cell.x + cell.ox, cell.y + cell.oy - cell.h * utils.sy))
+        obj.quad:draw(utils.ratio, utils:worldCoordinates(cell.cx, cell.cy - cell.h * utils.sy))
       end
       if gameState.cell and gameState.cell.y < cell.y then
         utils.setColor()
@@ -143,7 +143,7 @@ function utils.drawCells(gameState) -- beurk beurk beurk
       missed.quad:draw(utils.ratio, utils:worldCoordinates(missed.x, missed.y))
     end
     -- if gameState.cell and gameState.cell.walkable and cell.walkable and gameState.cell.y == cell.y then
-    --   love.graphics.print(cell.x - gameState.cell.x..' '..cell.h, utils:worldCoordinates(cell.x + cell.ox, cell.y + cell.oy))
+    --   love.graphics.print(cell.x - gameState.cell.x..' '..cell.h, utils:worldCoordinates(cell.cx, cell.cy))
     -- end
   end
 end
@@ -166,6 +166,7 @@ function utils.cellAt(x, y)
   end
   if not utils.cells[y][x] then
     local walkable = utils.isWalkable(x, y)
+    local ox, oy = -.15 + .3 * love.math.random(), -.15 + .3 * love.math.random()
     utils.cells[y][x] = {
       x = x,
       y = y,
@@ -176,8 +177,12 @@ function utils.cellAt(x, y)
       flying = {},
       missed = {},
       agents = {},
-      ox = -.15 + .3 * love.math.random(),
-      oy = -.15 + .3 * love.math.random(),
+      ox = ox,
+      oy = oy,
+      cx = x + ox, -- coordonnées des objets
+      cy = y + oy,
+      ax = x, -- coordonnées des agents (custom pour la porte de secours)
+      ay = y,
       isEmpty = utils.cellIsEmpty
     }
     table.insert(utils.orderedCells, utils.cells[y][x])
@@ -219,7 +224,7 @@ function utils.cellCoordinates(self, x, y)
          math.floor(((y - self.oy) + .5 * self.ch) / (self.ch))
 end
 
-function utils.initAgent(id, x, y, tongue, animations, stress)
+function utils.initAgent(id, cell, tongue, animations, stress)
   for i = 1, #tongue.texts.work do
     tongue.texts.work[i] = utils.text.init(tongue.font, tongue.texts.work[i])
   end
@@ -235,8 +240,10 @@ function utils.initAgent(id, x, y, tongue, animations, stress)
   local agent = {
     id = id,
     tongue = tongue,
-    x = x,
-    y = y,
+    from = cell,
+    to = cell,
+    x = cell.ax,
+    y = cell.ay,
     state = 'idle',
     headState = 'idle',
     itemState = 'idle',
@@ -249,8 +256,7 @@ function utils.initAgent(id, x, y, tongue, animations, stress)
     goTo = utils.goTo,
     stress = 0--stress or love.math.random(0, 7)
   }
-  agent.to = utils.cellAt(agent.x, agent.y)
-  table.insert(agent.to.agents, agent)
+  table.insert(cell.agents, agent)
   return agent
 end
 
@@ -308,15 +314,15 @@ function utils.remove(tab, item)
   end
 end
 
-function utils.goTo(self, cell, ox, oy)
+function utils.goTo(self, cell) -- à modifier
   self.from = self.to
   utils.remove(self.to.agents, self)
   self.to = cell
   table.insert(self.to.agents, self)
   self.t = 0
-  self.path = utils.initPath(self.from.x, self.from.y, (self.to.x + (ox or 0)), (self.to.y + (oy or 0)))
-  self.reverse = (self.to.x + (ox or 0)) < self.from.x
-  self.behind = (self.to.y + (oy or 0)) < self.from.y
+  self.path = utils.initPath(self.from.ax, self.from.ay, self.to.ax, self.to.ay)
+  self.reverse = self.to.ax < self.from.ax
+  self.behind = self.to.ay < self.from.ay
 end
 
 function utils.updateAgent(agent, dt, gameState)
@@ -337,7 +343,7 @@ function utils.updateAgent(agent, dt, gameState)
       agent.headState = 'cry'
       agent.tongue:leaving()
       agent.animations.head.cry.t = 0
-      agent:goTo(gameState.door.cell, gameState.door.ox)
+      agent:goTo(gameState.door.cell)
     elseif love.math.random() < .5 * dt and (gameState.state ~= 'IDLE' or agent.id ~= 'Ivan') then -- ivan ne doit pas bouger en idle pour que le 1er aim fonctionne correctement
       local candidates = {}
       local origin = utils.cellAt(agent.x, agent.y)
