@@ -142,8 +142,13 @@ local gameState = {
   aimingObs = {},
   updateCell = function(self, x, y)
     if self.state ~= 'PAUSE' then
-      self.cell = utils.cellAt(utils:cellCoordinates(x, y))
-      self.aimingObs = utils.heightThreshold(self.cell) -- TODO à maj en temps réel
+      local cell = utils.cellAt(utils:cellCoordinates(x, y))
+      if cell.redacWalkable then
+        self.cell = cell
+        self.aimingObs = utils.heightThreshold(cell) -- TODO à maj en temps réel
+      else
+        self.cell = nil
+      end
     end
   end,
   update = function(self, dt)
@@ -257,7 +262,7 @@ local gameState = {
     end
   end,
   aim = function(self)
-    if ivan.state ~= 'walking' and self.cell.redacWalkable and self.state ~= 'GAME_OVER' then
+    if ivan.state ~= 'walking' and self.cell and self.state ~= 'GAME_OVER' then
       self.aiming = true
       ivan.state = 'aiming'
       ivan.reverse = false
@@ -342,7 +347,7 @@ function love.draw()
   end
   -- utils.drawWalkingAreas()
 
-  if gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
+  if gameState.cell and gameState.state ~= 'GAME_OVER' then
     utils.drawLine(utils.lineAt(gameState.cell.y))
   end
 
@@ -366,7 +371,7 @@ function love.draw()
 
   utils.drawTexts(gameState)
 
-  if ivan.state ~= 'walking' and gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' then
+  if ivan.state ~= 'walking' and gameState.cell and gameState.state ~= 'GAME_OVER' then
     gameState.data.cursor:draw(utils.ratio, utils:worldCoordinates(gameState.cell.x, gameState.cell.y))
     if gameState.state ~= 'IDLE' or gameState.aiming then
       gameState.data.ruler:draw(utils.ratio, utils:worldCoordinates(gameState.cell.cx, gameState.cell.cy))
