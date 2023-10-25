@@ -89,7 +89,7 @@ function utils.updateCells(dt, gameState)
     for i = #cell.flying, 1, -1 do
       cell.flying[i]:update(dt)
       if not cell.flying[i].update then
-        table.insert(cell.objs, table.remove(cell.flying, i))
+        cell.obj = table.remove(cell.flying, i)
         cell.waitingFor = false -- en attente d'un rédacteur
         utils.alert(cell, gameState.agents)
       end
@@ -117,15 +117,15 @@ function utils.drawCells(gameState) -- beurk beurk beurk
         utils.drawAgent(agent, gameState)
       end
     end
-    if #cell.objs > 0 or cell.h ~= 0 then
+    if cell.obj or cell.h ~= 0 then
       if gameState.cell and gameState.cell.redacWalkable and gameState.state ~= 'GAME_OVER' and gameState.cell.y < cell.y then
         love.graphics.setColor(r, g, b, .2)
       end
       if cell.h ~= 0 and cell.redacWalkable then
         gameState.data.mags[cell.h]:draw(utils.ratio, utils:worldCoordinates(cell.cx, cell.cy))
       end
-      for j, obj in ipairs(cell.objs) do
-        obj.quad:draw(utils.ratio, utils:worldCoordinates(cell.cx, cell.cy - cell.h * utils.sy))
+      if cell.obj then
+        cell.obj.quad:draw(utils.ratio, utils:worldCoordinates(cell.cx, cell.cy - cell.h * utils.sy))
       end
       if gameState.cell and gameState.cell.y < cell.y then
         utils.setColor()
@@ -157,7 +157,7 @@ function utils.drawTexts(gameState)
 end
 
 function utils.cellIsEmpty(self, skipH)
-  return #self.objs + #self.agents + #self.flying + utils.ternary(skipH, 0, self.h) == 0
+  return not self.obj and #self.agents + #self.flying + utils.ternary(skipH, 0, self.h) == 0
 end
 
 function utils.cellAt(x, y)
@@ -173,7 +173,7 @@ function utils.cellAt(x, y)
       h = utils.ternary(walkable, 0, 10),
       walkable = walkable,
       redacWalkable = utils.isRedacWalkable(x, y),
-      objs = {},
+      obj = nil,
       flying = {},
       missed = {},
       agents = {},
@@ -385,9 +385,7 @@ function utils.updateAgent(agent, dt, gameState)
       agent.state = 'work'
     end
   elseif agent.state == 'work' then
-    local objs = agent.target.objs
-    table.remove(objs, #objs) -- on retire le dernier objet (un avion)
-    table.insert(objs, {quad = gameState.data.article})
+    agent.target.obj = {quad = gameState.data.article}
     gameState:setArticleCount(gameState.articleCount + 1)
     agent.target.waitingFor = nil -- le rédacteur a ramasser l'avion
     agent.target = nil

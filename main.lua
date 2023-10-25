@@ -175,16 +175,17 @@ local gameState = {
             local candidates = {}
             local needsUpdate = false
             for i, cell in ipairs(utils.orderedCells) do
-              if cell.redacWalkable and #cell.objs ~= 0 then
+              if cell.redacWalkable and cell.obj then
                 needsUpdate = needsUpdate or self.cell and cell.y == self.cell.y
                 if cell.waitingFor == nil then -- s'il y a un objet et que waitingFor est nil => c'est un article !
                   table.insert(candidates, cell)
                 else
-                  local p = table.remove(cell.objs, #cell.objs)
+                  local p = cell.obj
                   p.exploding = false
                   p.update = utils.updatePlane
                   p.animations = {exploding = self.data.exploding:copy()}
                   p.animations.exploding.t = 0
+                  cell.obj = nil
                   table.insert(cell.missed, p)
                 end
               end
@@ -196,7 +197,7 @@ local gameState = {
                 local cell = table.remove(candidates);
                 cell.h = math.min(cell.h + 1, 10)
                 self:setMoney(self.money + 2) -- chaque article rapporte 2 billets
-                table.remove(cell.objs, #cell.objs)
+                cell.obj = nil
               end
               self:setArticleCount(self.articleCount - self.articleTodoCount)
               self:setMagCount(self.magCount + 1)
