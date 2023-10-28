@@ -1,6 +1,5 @@
 local utils = {
-  cells = {},
-  orderedCells = {},
+  rows = {},
   walkableAreas = {
     -- ivan
     {x = 1, y = 2, w = 1, h = 6},
@@ -18,10 +17,34 @@ local utils = {
 
 function utils.initCells()
   for i, wa in ipairs(utils.walkableAreas) do
-    for x = 0, wa.w do -- +1 pour l'init de l'obstacle du aimingSystem
-      for y = 0, wa.h - 1 do
-        utils.cellAt(wa.x + x, wa.y + y)
+    for y = 0, wa.h - 1 do
+      local row = {
+        wa = wa,
+        flyings = {},
+        explosions = {},
+        cells = {}
+      }
+      for x = 0, wa.w - 1 do
+        local ox, oy = -.15 + .3 * love.math.random(), -.15 + .3 * love.math.random()
+        local cell = {
+          row = row,
+          x = wa.x + x,
+          y = wa.y + y,
+          h = 0,
+          redacWalkable = 4 <= i and i <= 6, -- faire des World différents pour Ivan, les rédacteurs et la porte
+          obj = nil,
+          agents = {},
+          ox = ox,
+          oy = oy,
+          cx = wa.x + x + ox, -- coordonnées des objets
+          cy = wa.y + y + oy,
+          ax = wa.x + x, -- coordonnées des agents (custom pour la porte de secours)
+          ay = wa.y + y,
+          isEmpty = utils.cellIsEmpty
+        }
+        table.insert(row.cells, cell)
       end
+      table.insert(utils.rows, row)
     end
   end
 end
@@ -35,40 +58,12 @@ function utils.setColor()
   love.graphics.setColor(r, g, b, a)
 end
 
-function utils.isWalkable(x, y)
-  for i, wa in ipairs(utils.walkableAreas) do
-    if wa.x <= x and x < wa.x + wa.w and
-       wa.y <= y and y < wa.y + wa.h then
-      return true
-    end
-  end
-  return false
-end
-
-function utils.isRedacWalkable(x, y)
-  for i, wa in ipairs(utils.walkableAreas) do
-    if wa.x <= x and x < wa.x + wa.w and
-       wa.y <= y and y < wa.y + wa.h then
-      return 4 <= i and i <= 6
-    end
-  end
-  return false
-end
-
 function utils.lineAt(y)
   for i = 4, 6 do
     if utils.walkableAreas[i].y <= y and y < utils.walkableAreas[i].y + utils.walkableAreas[i].h then
       return y, utils.walkableAreas[i].x, utils.walkableAreas[i].w
     end
   end
-end
-
-function utils.cellComp(c1, c2)
-  return c1.y < c2.y
-end
-
-function utils.sortCells()
-  table.sort(utils.orderedCells, utils.cellComp)
 end
 
 function utils.alert(cell, agents)
@@ -85,23 +80,29 @@ end
 
 function utils.updateCells(dt, gameState)
   local candidates = {}
-  for i, cell in ipairs(utils.orderedCells) do
-    for i = #cell.flying, 1, -1 do
-      cell.flying[i]:update(dt)
-      if not cell.flying[i].update then
-        cell.obj = table.remove(cell.flying, i)
+  for i, row in ipairs(utils.rows) do
+    -- update flying planes
+    for j = #row.flyings, 1, -1 do
+      row.flyings[j]:update(dt)
+      if row.flyings[j].t == 1 then
+        local cell = row.cells[plane.y]
+        cell.obj = table.remove(cell.flying, j)
         cell.waitingFor = false -- en attente d'un rédacteur
         utils.alert(cell, gameState.agents)
       end
     end
-    for i = #cell.missed, 1, -1 do
-      cell.missed[i]:update(dt)
-      if not cell.missed[i].update then
-        table.remove(cell.missed, i)
+    -- update explosions
+    for j = #row.explosions, 1, -1 do
+      row.explosions[j]:update(dt)
+      if row.explosions[j].t == 1 then
+        table.remove(row.explosions, j)
       end
     end
-    if cell.waitingFor == false then
-      table.insert(candidates, cell)
+    -- update cells
+    for j, cell in ipairs(row.cells) do
+      if cell.waitingFor == false then
+        table.insert(candidates, cell)
+      end
     end
   end
 
@@ -111,40 +112,39 @@ function utils.updateCells(dt, gameState)
 end
 
 function utils.drawCells(gameState) -- beurk beurk beurk
-  for i, cell in ipairs(utils.orderedCells) do
-    for i, agent in ipairs(cell.agents) do
-      if agent.behind == false then
-        utils.drawAgent(agent, gameState)
+  for i, row in ipairs(utils.row) do
+    for j, cell in ipairs(row.cells) do
+      for k, agent in ipairs(cell.agents) do
+        if agent.behind == false then
+          utils.drawAgent(agent, gameState)
+        end
+      end
+      if cell.obj or cell.h ~= 0 then
+        if gameState.cell and gameState.state ~= 'GAME_OVER' and gameState.cell.y < cell.y then
+          love.graphics.setColor(r, g, b, .2)
+        end
+        if cell.h ~= 0 and cell.redacWalkable then
+          gameState.data.mags[cell.h]:draw(utils.ratio, utils:worldCoordinates(cell.cx, cell.cy))
+        end
+        if cell.obj then
+          cell.obj.quad:draw(utils.ratio, utils:worldCoordinates(cell.cx, cell.cy - cell.h * utils.sy))
+        end
+        if gameState.cell and gameState.cell.y < cell.y then
+          utils.setColor()
+        end
+      end
+      for i, agent in ipairs(cell.agents) do
+        if agent.behind then
+          utils.drawAgent(agent, gameState)
+        end
+      end
+      for j, flying in ipairs(cell.flying) do
+        flying.quad:draw(utils.ratio, utils:worldCoordinates(flying.x, flying.y))
+      end
+      for j, missed in ipairs(cell.missed) do
+        missed.quad:draw(utils.ratio, utils:worldCoordinates(missed.x, missed.y))
       end
     end
-    if cell.obj or cell.h ~= 0 then
-      if gameState.cell and gameState.state ~= 'GAME_OVER' and gameState.cell.y < cell.y then
-        love.graphics.setColor(r, g, b, .2)
-      end
-      if cell.h ~= 0 and cell.redacWalkable then
-        gameState.data.mags[cell.h]:draw(utils.ratio, utils:worldCoordinates(cell.cx, cell.cy))
-      end
-      if cell.obj then
-        cell.obj.quad:draw(utils.ratio, utils:worldCoordinates(cell.cx, cell.cy - cell.h * utils.sy))
-      end
-      if gameState.cell and gameState.cell.y < cell.y then
-        utils.setColor()
-      end
-    end
-    for i, agent in ipairs(cell.agents) do
-      if agent.behind then
-        utils.drawAgent(agent, gameState)
-      end
-    end
-    for j, flying in ipairs(cell.flying) do
-      flying.quad:draw(utils.ratio, utils:worldCoordinates(flying.x, flying.y))
-    end
-    for j, missed in ipairs(cell.missed) do
-      missed.quad:draw(utils.ratio, utils:worldCoordinates(missed.x, missed.y))
-    end
-    -- if gameState.cell and gameState.cell.walkable and cell.walkable and gameState.cell.y == cell.y then
-    --   love.graphics.print(cell.x - gameState.cell.x..' '..cell.h, utils:worldCoordinates(cell.cx, cell.cy))
-    -- end
   end
 end
 
@@ -161,34 +161,9 @@ function utils.cellIsEmpty(self, skipH)
 end
 
 function utils.cellAt(x, y)
-  if not utils.cells[y] then
-    utils.cells[y] = {}
+  if utils.cells[y] then
+    return utils.cells[y][x]
   end
-  if not utils.cells[y][x] then
-    local walkable = utils.isWalkable(x, y)
-    local ox, oy = -.15 + .3 * love.math.random(), -.15 + .3 * love.math.random()
-    utils.cells[y][x] = {
-      x = x,
-      y = y,
-      h = utils.ternary(walkable, 0, 10),
-      walkable = walkable,
-      redacWalkable = utils.isRedacWalkable(x, y),
-      obj = nil,
-      flying = {},
-      missed = {},
-      agents = {},
-      ox = ox,
-      oy = oy,
-      cx = x + ox, -- coordonnées des objets
-      cy = y + oy,
-      ax = x, -- coordonnées des agents (custom pour la porte de secours)
-      ay = y,
-      isEmpty = utils.cellIsEmpty
-    }
-    table.insert(utils.orderedCells, utils.cells[y][x])
-    utils.sortCells()
-  end
-  return utils.cells[y][x]
 end
 
 function utils.heightThreshold(cell)
@@ -198,17 +173,23 @@ function utils.heightThreshold(cell)
   end
 
   local obs = {}
+  local xMax = 0
   local onTop
   for i, neighbor in pairs(utils.cells[cell.y]) do
-    if neighbor.redacWalkable or cell.x < neighbor.x then
-      onTop = neighbor.redacWalkable and neighbor:isEmpty(true)
-      for dh = 0, neighbor.h do
-        local h = neighbor.x + dh - cell.x
-        -- print('h = '..neighbor.x..' + '..dh..' - '..cell.x.. ' = '..h..'(neighbor.x = '..neighbor.x..')')
-        if not obs[h] or neighbor.x < obs[h].cell.x then
-          obs[h] = {cell = neighbor, h = dh, onTop = onTop and dh == neighbor.h}
-        end
+    xMax = math.max(xMax, neighbor.x)
+    onTop = neighbor.redacWalkable and neighbor:isEmpty(true)
+    for dh = 0, neighbor.h do
+      local h = neighbor.x + dh - cell.x
+      -- print('h = '..neighbor.x..' + '..dh..' - '..cell.x.. ' = '..h..'(neighbor.x = '..neighbor.x..')')
+      if not obs[h] or neighbor.x < obs[h].cell.x then
+        obs[h] = {cell = neighbor, h = dh, onTop = onTop and dh == neighbor.h}
       end
+    end
+  end
+  for dh = 0, 10 do
+    local h = xMax + 1 + dh - cell.x
+    if not obs[h] then
+      obs[h] = {h = dh, onTop = false}
     end
   end
   return obs
@@ -346,22 +327,21 @@ function utils.updateAgent(agent, dt, gameState)
       agent:goTo(gameState.door.cell)
     elseif love.math.random() < .5 * dt and (gameState.state ~= 'IDLE' or agent.id ~= 'Ivan') then -- ivan ne doit pas bouger en idle pour que le 1er aim fonctionne correctement
       local candidates = {}
-      local origin = utils.cellAt(agent.x, agent.y)
       local next
       next = utils.cellAt(agent.x - 1, agent.y)
-      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
+      if next and agent.to.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       next = utils.cellAt(agent.x, agent.y - 1)
-      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
+      if next and agent.to.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       next = utils.cellAt(agent.x + 1, agent.y)
-      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
+      if next and agent.to.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       next = utils.cellAt(agent.x, agent.y + 1)
-      if next.walkable and origin.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
+      if next and agent.to.redacWalkable == next.redacWalkable and next:isEmpty() and agent.from ~= next then
         table.insert(candidates, next)
       end
       if #candidates > 0 then
@@ -538,7 +518,7 @@ function utils.drawCalendar(gameState)
 end
 
 -- local N = {-1, -1, 0, -1, 1, -1, 1, 0, 1, 1, 0, 1, -1, 1, -1, 0}
-local N = {0, -1, 1, 0, 0, 1, -1, 0}
+local N = {0, -1, 1, 0, 0, 1, -1, 0} -- TODO à réutiliser dans updateAgent ou faire un voisinage
 local MAX_DIST = 4 * math.sqrt(2) -- TODO à réduire en fonction du temps qui passe -> plus de mag -> moins de perception
 function utils.findNearest(agents, cell)
   local candidates = {}
@@ -551,7 +531,7 @@ function utils.findNearest(agents, cell)
       if dist < MAX_DIST then -- et n'est pas trop loin
         for k = 1, #N, 2 do -- pour chaque case voisine
           neighbor = utils.cellAt(cell.x + N[k], cell.y + N[k + 1])
-          if neighbor.redacWalkable and neighbor:isEmpty() then -- si disponible
+          if neighbor and neighbor.redacWalkable and neighbor:isEmpty() then -- nota : redacWalkable est là pour la porte
             dist = utils.len(agent.x, agent.y, neighbor.x, neighbor.y)
             if dist < minDist then
               candidates = {{agent = agent, neighbor = neighbor}}
